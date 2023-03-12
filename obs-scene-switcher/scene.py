@@ -26,7 +26,7 @@ try:
             print(f'Switching to Scene {scene}')
             ws.call(requests.SetCurrentProgramScene(sceneName=scenes[scene]['sceneName']))
 
-        # send current scene to LEDs
+        # send current scene number to LEDs
         if time() - last_write_time > WRITE_DELAY:
             scenes = ws.call(requests.GetSceneList()).getScenes()
             currentName = ws.call(requests.GetCurrentProgramScene()).datain['currentProgramSceneName']
