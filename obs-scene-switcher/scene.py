@@ -8,11 +8,6 @@ last_write_time = 0
 
 env = dotenv_values()
 
-ws = obsws(env['HOST'], env['PORT'], env['PASSWORD'])
-ws.connect()
-
-serialPort = Serial(env['SERIAL_PORT'], baudrate=9600, bytesize=8, timeout=2, stopbits=STOPBITS_ONE)
-
 def get_scenes():
     """
     returns a tuple (list of scenes, current scene number)
@@ -23,7 +18,26 @@ def get_scenes():
     return scenes, scene
 
 if __name__ == '__main__':
+
+    # loop until connected to obs and remote
+    while True:
+        try:
+            ws = obsws(env['HOST'], env['PORT'], env['PASSWORD'])
+            ws.connect()
+            print('Connected to OBS!')
+            obs_connect = True
+        except: pass
+
+        try:
+            serialPort = Serial(env['SERIAL_PORT'], baudrate=9600, bytesize=8, timeout=2, stopbits=STOPBITS_ONE)
+            print('Connected to remote device!')
+            remote_connect = True
+        except: pass
+
+        if obs_connect and remote_connect: break
+
     scenes, scene = get_scenes()
+    
     try:
         while True:
             # handle button press

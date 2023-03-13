@@ -1,8 +1,8 @@
 #define NUM_BUTTONS 4
 #define DELAY 100 // milliseconds
 
-int buttons[] = {2, 3, 4, 5}; // pin numbers
-int leds[] = {9, 10, 11, 12};
+int buttons[] = { 2, 3, 4, 5 }; // pin numbers
+int leds[] = { 9, 10, 11, 12 };
 
 int reads[NUM_BUTTONS];
 
