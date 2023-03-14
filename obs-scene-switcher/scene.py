@@ -27,7 +27,7 @@ if __name__ == '__main__':
             try:
                 ws = obsws(env['HOST'], env['PORT'], env['PASSWORD'])
                 ws.connect()
-                print('Connected to OBS!')
+                print('Connected to OBS')
                 obs_connect = True
             except KeyboardInterrupt: exit()
             except: pass
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         if not remote_connect:
             try:
                 serialPort = Serial(env['SERIAL_PORT'], baudrate=9600, bytesize=8, timeout=2, stopbits=STOPBITS_ONE)
-                print('Connected to remote device!')
+                print('Connected to remote device')
                 remote_connect = True
             except KeyboardInterrupt: exit()
             except: pass
@@ -51,8 +51,9 @@ if __name__ == '__main__':
                 scenes, oldScene = get_scenes()
                 scene = int.from_bytes(serialPort.read(), "big")
                 if scene < len(scenes):
-                    if scene != oldScene: print(f'Switching to Scene {scene}')
-                    ws.call(requests.SetCurrentProgramScene(sceneName=scenes[scene]['sceneName']))
+                    sceneName = scenes[scene]['sceneName']
+                    if scene != oldScene: print(f'Switching to {sceneName}')
+                    ws.call(requests.SetCurrentProgramScene(sceneName=sceneName))
                     
             # send current scene number to LEDs after DELAY seconds
             if time() - last_write_time > DELAY:
