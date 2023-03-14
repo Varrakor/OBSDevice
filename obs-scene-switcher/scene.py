@@ -3,7 +3,7 @@ from obswebsocket import obsws, requests
 from time import time
 from dotenv import dotenv_values
 
-WRITE_DELAY = 0.5 # seconds
+DELAY = 0.5 # seconds
 last_write_time = 0
 
 env = dotenv_values()
@@ -48,10 +48,13 @@ if __name__ == '__main__':
                     print(f'Switching to Scene {scene}')
                     ws.call(requests.SetCurrentProgramScene(sceneName=scenes[scene]['sceneName']))
                     
-            # send current scene number to LEDs
-            if time() - last_write_time > WRITE_DELAY:
+            # send current scene number to LEDs after DELAY seconds
+            if time() - last_write_time > DELAY:
                 scenes, scene = get_scenes()
                 serialPort.write(scene.to_bytes(1, "big"))
                 last_write_time = time()
             
-    except KeyboardInterrupt: ws.disconnect()
+    except KeyboardInterrupt: pass
+    except Exception as e: print(e)
+
+    ws.disconnect()
