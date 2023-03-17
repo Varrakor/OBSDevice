@@ -1,14 +1,4 @@
-altgraph==0.17.2
-future==0.18.2
-iso8601==1.1.0
-macholib==1.15.2
 obs-websocket-py==1.0
-pip==23.0.1
 pyserial==3.5
 python-dotenv==1.0.0
-PyYAML==6.0
-setuptools==67.6.0
-six==1.15.0
 websocket-client==1.5.1
-websockets==10.4
-wheel==0.37.0

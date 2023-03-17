@@ -1,5 +1,7 @@
 from serial import Serial, STOPBITS_ONE
+from serial.serialutil import SerialException
 from obswebsocket import obsws, requests
+from obswebsocket.exceptions import ConnectionFailure
 from time import time
 from dotenv import dotenv_values
 
@@ -15,7 +17,7 @@ last_write_time = 0
 
 env = dotenv_values()
 
-def get_scenes():
+def get_scenes(ws):
     """
     returns a tuple (list of scenes, current scene number)
     """
@@ -36,11 +38,11 @@ def get_scenes():
 
     return scenes, scene
 
-if __name__ == '__main__':
+def main():
     obs_connect, remote_connect = False, False
 
     # loop until connected to obs and remote
-    while True:
+    while not obs_connect or not remote_connect:
         if not obs_connect:
             try:
                 ws = obsws(env['HOST'], env['PORT'], env['PASSWORD'])
@@ -48,7 +50,8 @@ if __name__ == '__main__':
                 print('Connected to OBS')
                 obs_connect = True
             except KeyboardInterrupt: exit()
-            except: pass
+            except ConnectionFailure: pass
+            except Exception as e: print('MyError: ', e)
 
         if not remote_connect:
             try:
@@ -56,17 +59,16 @@ if __name__ == '__main__':
                 print('Connected to remote device')
                 remote_connect = True
             except KeyboardInterrupt: exit()
-            except: pass
+            except SerialException: pass
+            except Exception as e: print('MyError: ', e)
 
-        if obs_connect and remote_connect: break
+    scenes, scene = get_scenes(ws)
 
-    scenes, scene = get_scenes()
-    
     try:
         while True:
             # handle button press
             if serialPort.in_waiting > 0:
-                scenes, oldScene = get_scenes()
+                scenes, oldScene = get_scenes(ws)
                 # scene = len(scenes) - int.from_bytes(serialPort.read(), "big") - 1 # reverse order
                 scene = int.from_bytes(serialPort.read(), "big")
                 if scene >= 0 and scene < len(scenes):
@@ -76,11 +78,14 @@ if __name__ == '__main__':
                     
             # send current scene number to LEDs after DELAY seconds
             if time() - last_write_time > DELAY:
-                scenes, scene = get_scenes()
-                serialPort.write(scene.to_bytes(1, "big"))
+                scenes, scene = get_scenes(ws)
+                # serialPort.write(scene.to_bytes(1, "big"))
                 last_write_time = time()
             
-    except KeyboardInterrupt: pass
-    except Exception as e: print(e)
+    except KeyboardInterrupt: exit()
+    except Exception as e: print('MyError: ', e)
 
     ws.disconnect()
+
+if __name__ == '__main__':
+    while True: main() # in case of disconnect, repeat
