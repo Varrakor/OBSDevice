@@ -4,7 +4,7 @@
 
 Load the program onto the Arduino Nano using the Arduino IDE, PlatformIO, or other application.
 
-The python script requires a .env file located in the same directory.
+The python scripts require a .env file located in the same directory.
 
 Example .env contents:
 

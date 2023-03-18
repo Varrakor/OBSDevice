@@ -11,9 +11,8 @@ BY_SCENE_NAME = 1
 
 order = TOP_TO_BOTTOM # BY_SCENE_NAME
 
-# interval for sending current scene back to remote
-DELAY = 0.5 # seconds
-last_write_time = 0
+# interval for sending current scene back to remote in seconds
+DELAY = 0.5
 
 env = dotenv_values()
 
@@ -41,17 +40,18 @@ def get_scenes(ws):
 def main():
     obs_connect, remote_connect = False, False
 
+    def set_obs_connect(data): raise Exception() # currently hacky
+
     # loop until connected to obs and remote
     while not obs_connect or not remote_connect:
         if not obs_connect:
             try:
-                ws = obsws(env['HOST'], env['PORT'], env['PASSWORD'])
+                ws = obsws(env['HOST'], env['PORT'], env['PASSWORD'], on_disconnect=set_obs_connect) # gross way to raise exception
                 ws.connect()
                 print('Connected to OBS')
                 obs_connect = True
             except KeyboardInterrupt: exit()
             except ConnectionFailure: pass
-            except Exception as e: print('MyError: ', e)
 
         if not remote_connect:
             try:
@@ -60,12 +60,12 @@ def main():
                 remote_connect = True
             except KeyboardInterrupt: exit()
             except SerialException: pass
-            except Exception as e: print('MyError: ', e)
 
     scenes, scene = get_scenes(ws)
-
+    
+    last_write_time = 0
     try:
-        while True:
+        while obs_connect:
             # handle button press
             if serialPort.in_waiting > 0:
                 scenes, oldScene = get_scenes(ws)
@@ -79,13 +79,11 @@ def main():
             # send current scene number to LEDs after DELAY seconds
             if time() - last_write_time > DELAY:
                 scenes, scene = get_scenes(ws)
-                # serialPort.write(scene.to_bytes(1, "big"))
+                serialPort.write(scene.to_bytes(1, "big"))
                 last_write_time = time()
             
     except KeyboardInterrupt: exit()
-    except Exception as e: print('MyError: ', e)
-
-    ws.disconnect()
+    except: return # restart main to wait for reconnection
 
 if __name__ == '__main__':
     while True: main() # in case of disconnect, repeat
