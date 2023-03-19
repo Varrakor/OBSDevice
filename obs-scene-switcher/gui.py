@@ -24,6 +24,7 @@ def set_scene(s):
   return -1
 
 leds = []
+rec, stream = None, None
 
 def on_current_program_scene_changed(data):
   scenes = get_scenes()
@@ -31,10 +32,20 @@ def on_current_program_scene_changed(data):
     if i == [s['sceneIndex'] for s in scenes if s['sceneName'] == data.scene_name][0]: leds[i]['bg'] = 'red'
     else: leds[i]['bg'] = 'white'
 
+def on_stream_state_changed(data):
+  if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED': stream['text'] = 'Stop Streaming'
+  elif data.output_state == 'OBS_WEBSOCKET_OUTPUT_STOPPED': stream['text'] = 'Start Streaming'
+
+def on_record_state_changed(data):
+  if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED': rec['text'] = 'Stop Recording'
+  elif data.output_state == 'OBS_WEBSOCKET_OUTPUT_STOPPED': rec['text'] = 'Start Recording'
+
 def main():
-  global leds
+  global leds, rec, stream
 
   event.callback.register(on_current_program_scene_changed)
+  event.callback.register(on_record_state_changed)
+  event.callback.register(on_stream_state_changed)
 
   scenes = get_scenes()
   sceneName = request.get_current_program_scene().current_program_scene_name
@@ -48,6 +59,11 @@ def main():
   
   leds = [tk.Label(m, text=' ', bg='red' if i==s else 'white') for i in range(8)]
   for i, l in enumerate(leds): l.grid(column=1 if i<4 else 3, row=i%4)
+
+  stream = tk.Button(m, text='Start Streaming', command=request.toggle_stream)
+  stream.grid(column=4, row=0)
+  rec = tk.Button(m, text='Start Recording', command=request.toggle_record)
+  rec.grid(column=4, row=1)
 
   m.mainloop()
 
