@@ -23,6 +23,45 @@ def set_scene(s):
     return s
   return -1
 
+def get_volume_inputs():
+  """
+  @summary:   Get audio inputs (for output capture)
+  @author:    Brandon
+
+  @return:    all volume inputs from OBS
+  @rtype:     list
+  """
+  inputs = request.get_input_list().inputs
+  volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture']
+  return volume_inputs
+
+def get_volume(volume_input):
+  """
+  @summary:   Get the volume of the provided input
+  @author:    Brandon
+
+  @param:     volume_input: the input to get the colume from
+  @type:      Request
+
+  @return:    volume of input in decibels
+  @rtype:     float
+  """
+  volume = request.get_input_volume(volume_input['inputName'])
+  return volume.input_volume_db
+
+def set_volume(input, name):
+  """
+  @summary:   Set the volume of the provided input in decibels
+  @author:    Brandon
+
+  @param:     input: the volume to set the input to
+  @type:      float
+
+  @param:     name: the name of the input to change volume of
+  @type:      string
+  """
+  request.set_input_volume(name, vol_db=int(input))
+
 leds = []
 rec, stream = None, None
 
@@ -48,6 +87,7 @@ def main():
   event.callback.register(on_stream_state_changed)
 
   scenes = get_scenes()
+  volume_inputs = get_volume_inputs()
   sceneName = request.get_current_program_scene().current_program_scene_name
   s = [s['sceneIndex'] for s in scenes if s['sceneName'] == sceneName][0]
 
@@ -64,6 +104,13 @@ def main():
   stream.grid(column=4, row=0)
   rec = tk.Button(m, text='Start Recording', command=request.toggle_record)
   rec.grid(column=4, row=1)
+
+  for i in range(len(volume_inputs)):
+    audio = volume_inputs[i]
+    current_volume = get_volume(audio)
+    slider = tk.Scale(m, label=f'{audio["inputName"]}', orient='horizontal', from_=-100.0, to=0.0, length=150, command= lambda val, name=audio["inputName"]: set_volume(val, name))
+    slider.set(current_volume)
+    slider.grid(column=5, row=i)
 
   m.mainloop()
 
