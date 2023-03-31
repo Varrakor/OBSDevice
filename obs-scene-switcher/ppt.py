@@ -1,46 +1,18 @@
-import os, curses
+import subprocess
 
-script = """tell application "Microsoft PowerPoint"
-	# activate
-	set theView to view of document window 1
-	my {}(theView)
-end tell
+UP=126
+DOWN=125
 
-on goToNextSlide(theView)
-	tell application "Microsoft PowerPoint"
-		# activate
-		set curSlide to slide index of slide range of selection of document window 1
-		go to slide theView number (curSlide + 1)
-	end tell
-end goToNextSlide
-
-on goToPreviousSlide(theView)
-	tell application "Microsoft PowerPoint"
-		# activate
-		set curSlide to slide index of slide range of selection of document window 1
-		go to slide theView number (curSlide - 1)
-	end tell
-end goToPreviousSlide"""
-
-file = 'apple.SCPT'
-
-# Initialize the terminal
-win = curses.initscr()
-
-# Turn off line buffering
-curses.cbreak()
-
-# Make getch() non-blocking
-win.nodelay(True)
+script="""tell application "Microsoft PowerPoint"
+  activate
+  tell app "System Events" to key code {}
+end tell"""
 
 while True:
-    try: key = chr(win.getch())
-    except ValueError: continue
-    try:
-      if key in 'aw': lines = script.format('goToPreviousSlide').split('\n')
-      elif key in 'ds': lines = script.format('goToNextSlide').split('\n')
-      if key in 'wsad':
-        cmd = 'osascript'
-        for l in lines: cmd += f' -e \'{l}\''
-        os.system(cmd)
-    except: exit()
+  key = input()
+  if key in 'aw': lines = script.format(UP).split('\n')
+  elif key in 'ds': lines = script.format(DOWN).split('\n')
+  if key in 'wsad':
+    cmd = 'osascript'
+    for l in lines: cmd += f' -e \'{l}\''
+    subprocess.run(cmd, shell=True)
