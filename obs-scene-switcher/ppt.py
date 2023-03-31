@@ -8,11 +8,10 @@ script="""tell application "Microsoft PowerPoint"
   tell app "System Events" to key code {}
 end tell"""
 
-while True:
-  key = input()
-  if key in 'aw': lines = script.format(UP).split('\n')
-  elif key in 'ds': lines = script.format(DOWN).split('\n')
-  if key in 'wsad':
+def ppt(key):
+  if key == 'prev': lines = script.format(UP).split('\n')
+  elif key == 'next': lines = script.format(DOWN).split('\n')
+  if key in 'prevnext':
     cmd = 'osascript'
     for l in lines: cmd += f' -e \'{l}\''
-    subprocess.run(cmd, shell=True)
+    subprocess.run(cmd, shell=True, capture_output=True)

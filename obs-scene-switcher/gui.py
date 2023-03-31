@@ -1,6 +1,7 @@
 import obsws_python as obs
 from dotenv import dotenv_values
 import tkinter as tk
+from ppt import ppt
 
 # using different obs websocket library from https://github.com/aatikturk/obsws-python
 
@@ -104,6 +105,12 @@ def main():
   stream.grid(column=4, row=0)
   rec = tk.Button(m, text='Start Recording', command=request.toggle_record)
   rec.grid(column=4, row=1)
+
+  # powerpoint buttons
+  prev = tk.Button(m, text='Previous', command=lambda: ppt('prev'))
+  prev.grid(column=0, row=4)
+  next = tk.Button(m, text='Next', command=lambda: ppt('next'))
+  next.grid(column=1, row=4)
 
   for i in range(len(volume_inputs)):
     audio = volume_inputs[i]
