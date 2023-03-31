@@ -68,7 +68,7 @@ rec, stream = None, None
 def on_current_program_scene_changed(data):
   scenes = get_scenes()
   for i in range(8):
-    if i == [s['sceneIndex'] for s in scenes if s['sceneName'] == data.scene_name][0]: leds[i]['bg'] = 'red'
+    if i == [s['sceneIndex'] for s in scenes if s['sceneName'] == data.scene_name][0]: leds[i]['bg'] = 'blue'
     else: leds[i]['bg'] = 'white'
 
 def on_stream_state_changed(data):
@@ -97,7 +97,7 @@ def main():
   buttons = [tk.Button(m, text=i+1, command=lambda s=i: set_scene(s)) for i in range(8)]
   for i, b in enumerate(buttons): b.grid(column=0 if i<4 else 2, row=i%4)
   
-  leds = [tk.Label(m, text=' ', bg='red' if i==s else 'white') for i in range(8)]
+  leds = [tk.Label(m, text=' ', bg='blue' if i==s else 'white') for i in range(8)]
   for i, l in enumerate(leds): l.grid(column=1 if i<4 else 3, row=i%4)
 
   stream = tk.Button(m, text='Start Streaming', command=request.toggle_stream)
