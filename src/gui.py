@@ -1,7 +1,7 @@
 import obsws_python as obs
 from dotenv import dotenv_values
 import tkinter as tk
-from ppt import ppt
+from ppt import *
 
 # using different obs websocket library from https://github.com/aatikturk/obsws-python
 
@@ -80,7 +80,7 @@ def on_record_state_changed(data):
   if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED': rec['text'] = 'Stop Recording'
   elif data.output_state == 'OBS_WEBSOCKET_OUTPUT_STOPPED': rec['text'] = 'Start Recording'
 
-def main():
+def gui():
   global leds, rec, stream
 
   event.callback.register(on_current_program_scene_changed)
@@ -107,9 +107,9 @@ def main():
   rec.grid(column=4, row=1)
 
   # powerpoint buttons
-  prev = tk.Button(m, text='Previous', command=lambda: ppt('prev'))
+  prev = tk.Button(m, text='Previous', command=lambda: change_slide(PPT_PREVIOUS))
   prev.grid(column=0, row=4)
-  next = tk.Button(m, text='Next', command=lambda: ppt('next'))
+  next = tk.Button(m, text='Next', command=lambda: change_slide(PPT_NEXT))
   next.grid(column=1, row=4)
 
   for i in range(len(volume_inputs)):
@@ -122,4 +122,4 @@ def main():
   m.mainloop()
 
 if __name__ == '__main__':
-  main()
+  gui()
