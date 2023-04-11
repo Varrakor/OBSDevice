@@ -5,8 +5,8 @@ import pathlib
 
 class PPT():
 
-  PPT_PREVIOUS = 126
-  PPT_NEXT = 125
+  PREVIOUS = 126
+  NEXT = 125
 
   SCRIPT = pathlib.Path(__file__).parent / '../script/change_slide.applescript'
 
@@ -18,5 +18,5 @@ class PPT():
 if __name__ == '__main__':
   while True:
     key = input().strip()
-    if key in 'wa': PPT.change_slide(PPT.PREVIOUS)
+    if key in 'aw': PPT.change_slide(PPT.PREVIOUS)
     else: PPT.change_slide(PPT.NEXT)

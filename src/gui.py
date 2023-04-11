@@ -1,8 +1,12 @@
-'''Outdated testing code, to be replaced with two separate files, obs.py an OBS API and gui.py a GUI implementation'''
+'''Outdated testing code, replace with a GUI class that calls methods from the OBS class'''
+
+import tkinter as tk
+
+class GUI():
+  pass
 
 import obsws_python as obs
 from dotenv import dotenv_values
-import tkinter as tk
 from ppt import PPT
 
 # using different obs websocket library from https://github.com/aatikturk/obsws-python
