@@ -11,8 +11,8 @@ class OBS():
 
   def connect(self, host, port, password):
     try:
-      self.request = obs.ReqClient(host, port, password)
-      self.event = obs.EventClient(host, port, password)
+      self.request = obs.ReqClient(host=host, port=port, password=password)
+      self.event = obs.EventClient(host=host, port=port, passwor=password)
     except: pass
 
   def set_on_scene_change(self, callback):
