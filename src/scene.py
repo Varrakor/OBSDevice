@@ -1,3 +1,5 @@
+'''Outdated testing code, to be removed from project'''
+
 from serial import Serial, STOPBITS_ONE
 from serial.serialutil import SerialException
 from obswebsocket import obsws, requests

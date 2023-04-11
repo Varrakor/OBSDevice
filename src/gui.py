@@ -1,7 +1,9 @@
+'''Outdated testing code, to be replaced with two separate files, obs.py an OBS API and gui.py a GUI implementation'''
+
 import obsws_python as obs
 from dotenv import dotenv_values
 import tkinter as tk
-from ppt import *
+from ppt import PPT
 
 # using different obs websocket library from https://github.com/aatikturk/obsws-python
 
@@ -107,9 +109,9 @@ def gui():
   rec.grid(column=4, row=1)
 
   # powerpoint buttons
-  prev = tk.Button(m, text='Previous', command=lambda: change_slide(PPT_PREVIOUS))
+  prev = tk.Button(m, text='Previous', command=lambda: PPT.change_slide(PPT.PREVIOUS))
   prev.grid(column=0, row=4)
-  next = tk.Button(m, text='Next', command=lambda: change_slide(PPT_NEXT))
+  next = tk.Button(m, text='Next', command=lambda: PPT.change_slide(PPT.NEXT))
   next.grid(column=1, row=4)
 
   for i in range(len(volume_inputs)):
