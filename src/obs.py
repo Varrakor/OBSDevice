@@ -15,7 +15,7 @@ class OBS():
       self.event = obs.EventClient(host, port, password)
     except: pass
 
-  def set_on_scene_change(self, func):
-    def on_current_program_scene_changed(data): func(data)
+  def set_on_scene_change(self, callback):
+    def on_current_program_scene_changed(data): callback(data)
     if self.event:
       self.event.callback.register(on_current_program_scene_changed)
