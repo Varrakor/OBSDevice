@@ -1,4 +1,4 @@
-#include "Keyboard.h"
+// #include "Keyboard.h"
 
 #define NUM_BUTTONS 4
 #define DELAY 100 // milliseconds
@@ -39,7 +39,7 @@ void setup() {
   digitalWrite(modeLED, HIGH); // start in Serial mode
 
   Serial.begin(9600);
-  Keyboard.begin();
+  // Keyboard.begin();
 
   attachInterrupt(digitalPinToInterrupt(modeButton), toggleMode, RISING);
 }
@@ -53,7 +53,7 @@ void loop() {
     for(int i = 0; i < NUM_BUTTONS; ++i) {
       if(reads[i] == HIGH) {
         if (mode == 0) Serial.write(i);
-        else Keyboard.write('0'+ i); // ASCII value 
+        else ; // Keyboard.write('0'+ i); // ASCII value 
         lastButtonTime = millis(); 
         break;
       }

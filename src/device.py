@@ -1,4 +1,4 @@
 '''Interface with the physical device via serial'''
 
-class Device():
+class DeviceInterface():
   pass

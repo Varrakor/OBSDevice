@@ -3,20 +3,17 @@
 import subprocess
 import pathlib
 
-class PPT():
+PREVIOUS = 126 # key code
+NEXT = 125
 
-  PREVIOUS = 126
-  NEXT = 125
+SCRIPT = pathlib.Path(__file__).parent / '../script/change_slide.applescript'
 
-  SCRIPT = pathlib.Path(__file__).parent / '../script/change_slide.applescript'
-
-  @classmethod
-  def change_slide(key):
-    if key in [PPT.PREVIOUS, PPT.NEXT]:
-      subprocess.run(f'osascript {PPT.SCRIPT} {key}', shell=True)
+def change_slide(key):
+  if key in [PREVIOUS, NEXT]:
+    subprocess.run(f'osascript {SCRIPT} {key}', shell=True)
 
 if __name__ == '__main__':
   while True:
     key = input().strip()
-    if key in 'aw': PPT.change_slide(PPT.PREVIOUS)
-    else: PPT.change_slide(PPT.NEXT)
+    if key in 'aw': change_slide(PREVIOUS)
+    else: change_slide(NEXT)
