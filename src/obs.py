@@ -1,12 +1,15 @@
 '''
 Interface with OBS via websockets
 
-If disconnected to OBS, tries to reconnect whenever a method is called, otherwise does nothing
+If disconnected from OBS, tries to reconnect whenever a method is called, otherwise does nothing
 '''
 
 import obsws_python
 
 class OBS():
+  # class variables
+  OUTPUT_STARTED = True
+  OUTPUT_STOPPED = False
   
   def __init__(self, password, host='localhost', port=4455, verbose=False):
     '''
@@ -17,22 +20,22 @@ class OBS():
     self.password = password
     self.verbose = verbose
     
+    # websocket objects
     self.request = None
     self.event = None
     
     self.scenes = []
     self.scene_index = -1
-
     self.volume_inputs = []
+
+    self.stream_state = OBS.OUTPUT_STOPPED # TODO: initialise these values
+    self.record_state = OBS.OUTPUT_STOPPED 
 
     self.on_scene_change = lambda x: None
     self.on_stream_change = lambda x: None
     self.on_record_change = lambda x: None
 
     self.connect()
-    self.update()
-    self.update_volume_inputs()
-
 
   def connect(self):
     '''
@@ -42,6 +45,9 @@ class OBS():
     try:
       self.request = obsws_python.ReqClient(host=self.host, port=self.port, password=self.password)
       self.event = obsws_python.EventClient(host=self.host, port=self.port, password=self.password)
+
+      self.update_scenes()
+      self.update_volume_inputs()
 
       # register any callbacks
       self.register_on_scene_change(self.on_scene_change)
@@ -54,6 +60,7 @@ class OBS():
       self.request, self.event = None, None
       if self.verbose: print('Could not connect to OBS')
 
+  # -------------------- Scene methods --------------------
 
   def get_scene_index(self, scene_name):
     '''
@@ -63,8 +70,7 @@ class OBS():
       if s['scene_name'] == scene_name: return s['scene_index']
     return -1
 
-
-  def update(self):
+  def update_scenes(self):
     '''
     Update the current scene index and current scene list
     @return scene_index, scenes
@@ -86,22 +92,72 @@ class OBS():
 
     return self.scene_index, self.scenes # also return them
   
-
   def set_scene(self, scene_index):
     '''
     Request OBS change scene to scene_index
     @return scene_index if successful else -1
     '''
-    scene_name = self.scenes[scene_index]['scene_name']
-
-    try: self.request.set_current_program_scene(scene_name)
+    self.update_scenes()
+    try:
+      scene_name = self.scenes[scene_index]['scene_name']
+      self.request.set_current_program_scene(scene_name)
+      if self.verbose: print(f'Switched to {scene_name}')
+      return scene_index
     except:
       self.connect()
       return -1
 
-    if self.verbose: print(f'Switched to {scene_name}')
-    return scene_index
+  # -------------------- Audio methods --------------------
 
+  def update_volume_inputs(self):
+    '''
+    @summary:   Get audio inputs (for output capture)
+    @author:    Brandon
+
+    @return:    all volume inputs from OBS
+    @rtype:     list
+    '''
+    try:
+      inputs = self.request.get_input_list().inputs
+      self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture']
+    except: self.connect()
+    return self.volume_inputs
+
+  def get_volume(self, volume_input):
+    '''
+    @summary:   Get the volume of the provided input
+    @author:    Brandon
+
+    @param:     volume_input: the input to get the colume from
+    @type:      Request
+
+    @return:    volume of input in decibels
+    @rtype:     float
+    '''
+    try: return self.request.get_input_volume(volume_input['inputName']).input_volume_db
+    except:
+      self.connect()
+      return -1
+
+  def set_volume(self, input, name):
+    '''
+    @summary:   Set the volume of the provided input in decibels
+    @author:    Brandon
+
+    @param:     input: the volume to set the input to
+    @type:      float
+
+    @param:     name: the name of the input to change volume of
+    @type:      string
+    '''
+    try:
+      self.request.set_input_volume(name, vol_db=int(input))
+      return int(input)
+    except:
+      self.connect()
+      return -1
+    
+  # -------------------- Register callback methods --------------------
 
   def register_on_scene_change(self, callback):
     '''
@@ -114,18 +170,11 @@ class OBS():
     self.on_scene_change = callback
   
     def on_current_program_scene_changed(data):
-      self.update()
+      self.update_scenes()
       callback(self.scene_index)
-      # callback(self.get_scene_index(data.scene_name)) # callback takes scene_index as parameter
 
     try: self.event.callback.register(on_current_program_scene_changed)
     except: self.connect()
-
-
-  # class variables
-  OUTPUT_STARTED = True
-  OUTPUT_STOPPED = False
-
 
   def register_on_stream_change(self, callback):
     '''
@@ -144,7 +193,6 @@ class OBS():
     try: self.event.callback.register(on_stream_state_changed)
     except: self.connect()
   
-
   def register_on_record_change(self, callback):
     '''
     Register a callback function on record state change that takes output_state as a parameter
@@ -162,6 +210,7 @@ class OBS():
     try: self.event.callback.register(on_record_state_changed)
     except: self.connect()
 
+  # -------------------- Stream/recording methods --------------------
 
   def toggle_stream(self):
     try: self.request.toggle_stream()
@@ -173,62 +222,15 @@ class OBS():
     except: self.connect()
 
 
-  def update_volume_inputs(self):
-    '''
-    @summary:   Get audio inputs (for output capture)
-    @author:    Brandon
-
-    @return:    all volume inputs from OBS
-    @rtype:     list
-    '''
-    try:
-      inputs = self.request.get_input_list().inputs
-      self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture']
-    except: self.connect()
-    return self.volume_inputs
-
-
-  def get_volume(self, volume_input):
-    '''
-    @summary:   Get the volume of the provided input
-    @author:    Brandon
-
-    @param:     volume_input: the input to get the colume from
-    @type:      Request
-
-    @return:    volume of input in decibels
-    @rtype:     float
-    '''
-    try: return self.request.get_input_volume(volume_input['inputName']).input_volume_db
-    except:
-      self.connect()
-      return -1
-
-
-  def set_volume(self, input, name):
-    '''
-    @summary:   Set the volume of the provided input in decibels
-    @author:    Brandon
-
-    @param:     input: the volume to set the input to
-    @type:      float
-
-    @param:     name: the name of the input to change volume of
-    @type:      string
-    '''
-    try: self.request.set_input_volume(name, vol_db=int(input))
-    except: self.connect()
-
-
 if __name__ == '__main__':
   from dotenv import dotenv_values
   import time
 
   env = dotenv_values()
+
   obs = OBS(env['OBS_PASSWORD'], verbose=True)
   obs.register_on_scene_change(lambda scene_index: print(f'Changed to {scene_index}'))
 
   while True:
     time.sleep(1)
-    print(obs.update())
-    # print(obs.get_current_scene())
+    print(obs.update_scenes())
