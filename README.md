@@ -2,7 +2,11 @@
 
 ## OBS Scene Switcher
 
-Load the program onto the Arduino Nano using the Arduino IDE, PlatformIO, or other application.
+To initialise PlatformIO, ensure PlatformIO Core is installed and run
+
+```console
+pio project init --board nanoatmega328
+```
 
 The python scripts require a .env file located in the same directory.
 
@@ -12,5 +16,5 @@ Example .env contents:
 HOST=localhost
 PORT=4455
 PASSWORD=password                   # set in OBS app
-SERIAL_PORT=/dev/cu.usbserial-1410  # can be found on Mac with command: ls /dev/cu*
+SERIAL_PORT=/dev/cu.usbserial-1430  # can be found on Mac with command: ls /dev/cu*
 ```

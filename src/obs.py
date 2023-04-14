@@ -21,21 +21,18 @@ class OBS():
     self.event = None
     
     self.scenes = []
+    self.scene_index = -1
+
     self.volume_inputs = []
-    self.volume = 0
 
     self.on_scene_change = lambda x: None
     self.on_stream_change = lambda x: None
     self.on_record_change = lambda x: None
 
     self.connect()
+    self.update()
+    self.update_volume_inputs()
 
-    if self.connected():
-      self.update_scenes()
-      self.update_volume_inputs()
-
-  def connected(self):
-    return self.request and self.event
 
   def connect(self):
     '''
@@ -51,83 +48,84 @@ class OBS():
       self.register_on_stream_change(self.on_stream_change)
       self.register_on_record_change(self.on_record_change)
 
+      if self.verbose: print('Connected')
+
     except:
       self.request, self.event = None, None
       if self.verbose: print('Could not connect to OBS')
 
-  def update_scenes(self):
-    '''
-    Store latest scene list
-    Reverse scene indices so that index 0 is the top of the list
-    '''
-    if not self.connected(): self.connect()
-    if not self.connected(): return
 
-    scenes = self.request.get_scene_list().scenes
-    for s in scenes: s['sceneIndex'] = len(scenes) - s['sceneIndex'] - 1 # scene indices reversed
-    self.scenes = sorted(scenes, key=lambda s: s['sceneIndex'])
-  
-  def get_scene_index(self, sceneName):
+  def get_scene_index(self, scene_name):
     '''
-    @return scene index for a given sceneName in the current scene list else -1 if not found
+    @return scene index for a given scene_name in the current scene list else -1 if not found
     '''
     for s in self.scenes:
-      if s['sceneName'] == sceneName: return s['sceneIndex']
+      if s['scene_name'] == scene_name: return s['scene_index']
     return -1
+
+
+  def update(self):
+    '''
+    Update the current scene index and current scene list
+    @return scene_index, scenes
+    '''
+    try:
+      scenes = self.request.get_scene_list().scenes
+      scene_name = self.request.get_current_program_scene().current_program_scene_name
+    except:
+      self.connect()
+      return self.scene_index, self.scenes
+
+    # reverse indices and convert to snake_case
+    for s in scenes:
+      s['scene_index'] = len(scenes) - s['sceneIndex'] - 1
+      s['scene_name'] = s['sceneName']
+
+    self.scenes = sorted(scenes, key=lambda s: s['scene_index'])
+    self.scene_index = self.get_scene_index(scene_name)
+
+    return self.scene_index, self.scenes # also return them
   
-  def get_current_scene(self):
-    '''
-    Updates scene list and returns current sceneIndex
-    '''
-    if not self.connected(): self.connect()
-    if not self.connected(): return
 
-    self.update_scenes()
-    sceneName = self.request.get_current_program_scene().current_program_scene_name
-
-    for s in self.scenes:
-      if s['sceneName'] == sceneName: return s['sceneIndex']
-    return -1
-  
-  def set_scene(self, sceneIndex):
+  def set_scene(self, scene_index):
     '''
-    Request OBS change scene to sceneIndex
-    Firstly, update scene list
-    @return sceneIndex if successful else -1
+    Request OBS change scene to scene_index
+    @return scene_index if successful else -1
     '''
-    if not self.connected(): self.connect()
-    if not self.connected(): return
+    scene_name = self.scenes[scene_index]['scene_name']
 
-    self.update_scenes()
-    if sceneIndex >= 0 and sceneIndex < len(self.scenes):
-      sceneName = self.scenes[sceneIndex]['sceneName']
-      self.request.set_current_program_scene(sceneName)
-      if self.verbose: print(f'Switched to {sceneName}')
-      return sceneIndex
-    return -1
+    try: self.request.set_current_program_scene(scene_name)
+    except:
+      self.connect()
+      return -1
+
+    if self.verbose: print(f'Switched to {scene_name}')
+    return scene_index
+
 
   def register_on_scene_change(self, callback):
     '''
-    Register a callback function on scene change that takes current sceneIndex as parameter
+    Register a callback function on scene change that takes current scene_index as parameter
     Updates scene list before callback
-    @param callback eg. def callback(sceneIndex): pass
+    @param callback eg. def callback(scene_index): pass
     '''
 
-    # if disconnected, store callback to be registered on reconnect
+    # store callback to be registered on reconnect
     self.on_scene_change = callback
-
-    if not self.connected(): self.connect()
-    if not self.connected(): return
   
     def on_current_program_scene_changed(data):
-      self.update_scenes()
-      callback(self.get_scene_index(data.scene_name)) # callback takes sceneIndex as parameter
+      self.update()
+      callback(self.scene_index)
+      # callback(self.get_scene_index(data.scene_name)) # callback takes scene_index as parameter
 
-    self.event.callback.register(on_current_program_scene_changed)
+    try: self.event.callback.register(on_current_program_scene_changed)
+    except: self.connect()
+
 
   # class variables
   OUTPUT_STARTED = True
   OUTPUT_STOPPED = False
+
 
   def register_on_stream_change(self, callback):
     '''
@@ -139,15 +137,14 @@ class OBS():
     # if disconnected, store callback to be registered on reconnect
     self.on_stream_change = callback
 
-    if not self.connected(): self.connect()
-    if not self.connected(): return
-
     def on_stream_state_changed(data):
       if data.output_state in ['OBS_WEBSOCKET_OUTPUT_STARTED', 'OBS_WEBSOCKET_OUTPUT_STOPPED']:
         callback(OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED)
 
-    self.event.callback.register(on_stream_state_changed)
+    try: self.event.callback.register(on_stream_state_changed)
+    except: self.connect()
   
+
   def register_on_record_change(self, callback):
     '''
     Register a callback function on record state change that takes output_state as a parameter
@@ -158,26 +155,23 @@ class OBS():
     # if disconnected, store callback to be registered on reconnect
     self.on_record_change = callback
 
-    if not self.connected(): self.connect()
-    if not self.connected(): return
-
     def on_record_state_changed(data):
       if data.output_state in ['OBS_WEBSOCKET_OUTPUT_STARTED', 'OBS_WEBSOCKET_OUTPUT_STOPPED']:
         callback(OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED)
 
-    self.event.callback.register(on_record_state_changed)
+    try: self.event.callback.register(on_record_state_changed)
+    except: self.connect()
+
 
   def toggle_stream(self):
-    if not self.connected(): self.connect()
-    if not self.connected(): return
+    try: self.request.toggle_stream()
+    except: self.connect()
 
-    self.request.toggle_stream()
 
   def toggle_record(self):
-    if not self.connected(): self.connect()
-    if not self.connected(): return
+    try: self.request.toggle_record()
+    except: self.connect()
 
-    self.request.toggle_record()
 
   def update_volume_inputs(self):
     '''
@@ -187,11 +181,12 @@ class OBS():
     @return:    all volume inputs from OBS
     @rtype:     list
     '''
-    if not self.connected(): self.connect()
-    if not self.connected(): return
+    try:
+      inputs = self.request.get_input_list().inputs
+      self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture']
+    except: self.connect()
+    return self.volume_inputs
 
-    inputs = self.request.get_input_list().inputs
-    self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture']
 
   def get_volume(self, volume_input):
     '''
@@ -204,11 +199,11 @@ class OBS():
     @return:    volume of input in decibels
     @rtype:     float
     '''
-    if not self.connected(): self.connect()
-    if not self.connected(): return
+    try: return self.request.get_input_volume(volume_input['inputName']).input_volume_db
+    except:
+      self.connect()
+      return -1
 
-    volume = self.request.get_input_volume(volume_input['inputName'])
-    return volume.input_volume_db
 
   def set_volume(self, input, name):
     '''
@@ -221,7 +216,19 @@ class OBS():
     @param:     name: the name of the input to change volume of
     @type:      string
     '''
-    if not self.connected(): self.connect()
-    if not self.connected(): return
+    try: self.request.set_input_volume(name, vol_db=int(input))
+    except: self.connect()
 
-    self.request.set_input_volume(name, vol_db=int(input))
+
+if __name__ == '__main__':
+  from dotenv import dotenv_values
+  import time
+
+  env = dotenv_values()
+  obs = OBS(env['OBS_PASSWORD'], verbose=True)
+  obs.register_on_scene_change(lambda scene_index: print(f'Changed to {scene_index}'))
+
+  while True:
+    time.sleep(1)
+    print(obs.update())
+    # print(obs.get_current_scene())

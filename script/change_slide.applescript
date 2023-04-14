@@ -10,7 +10,7 @@ on window_is_open(appName)
   if my is_running(appName)
     tell application "System Events"
       tell process appName
-        return count of windows
+        return count of windows > 0
       end tell
     end tell
   else 

@@ -31,6 +31,7 @@ class GUI():
     self.next_button = tk.Button(self.master, text='Next', command=lambda: ppt.change_slide(ppt.NEXT))
     self.next_button.grid(column=1, row=4)
 
+    # audio slider
     for i in range(len(self.obs.volume_inputs)):
       audio = self.obs.volume_inputs[i]
       current_volume = self.obs.get_volume(audio)
@@ -57,9 +58,9 @@ class GUI():
     elif output_state == OBS.OUTPUT_STOPPED: self.rec_button['text'] = 'Start Recording'
 
   def loop(self):
-    self.master.mainloop()
+    self.master.mainloop() # should check for obs disconnect and reconnect
 
 if __name__ == '__main__':
   from dotenv import dotenv_values
-  env = dotenv_values('../.env')
-  GUI(env['PASSWORD'], env['HOST'], env['PORT']).loop()
+  env = dotenv_values()
+  GUI(env['OBS_PASSWORD'], env['OBS_HOST'], env['OBS_PORT']).loop()
