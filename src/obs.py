@@ -1,10 +1,14 @@
 '''
 Interface with OBS via websockets
 
-If disconnected from OBS, tries to reconnect whenever a method is called, otherwise does nothing
+A connection daemon ensures connection every second
+
+If disconnected from OBS, all methods do nothing while connection is reestablished
 '''
 
 import obsws_python
+import threading
+import time
 
 class OBS():
   # class variables
@@ -36,6 +40,7 @@ class OBS():
     self.on_record_change = lambda x: None
 
     self.connect()
+    threading.Thread(target=self.check_connection, daemon=True).start()
 
   def connect(self):
     '''
@@ -60,6 +65,15 @@ class OBS():
       self.request, self.event = None, None
       if self.verbose: print('Could not connect to OBS')
 
+  def check_connection(self, t=1):
+    '''
+    Daemon that checks for connection every t seconds and reestablishes lost connection
+    '''
+    while True:
+      try: self.request.get_version()
+      except: self.connect()
+      time.sleep(t)
+
   # -------------------- Scene methods --------------------
 
   def get_scene_index(self, scene_name):
@@ -79,7 +93,6 @@ class OBS():
       scenes = self.request.get_scene_list().scenes
       scene_name = self.request.get_current_program_scene().current_program_scene_name
     except:
-      self.connect()
       return self.scene_index, self.scenes
 
     # reverse indices and convert to snake_case
@@ -104,7 +117,6 @@ class OBS():
       if self.verbose: print(f'Switched to {scene_name}')
       return scene_index
     except:
-      self.connect()
       return -1
 
   # -------------------- Audio methods --------------------
@@ -120,7 +132,7 @@ class OBS():
     try:
       inputs = self.request.get_input_list().inputs
       self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture']
-    except: self.connect()
+    except: pass
     return self.volume_inputs
 
   def get_volume(self, volume_input):
@@ -135,9 +147,7 @@ class OBS():
     @rtype:     float
     '''
     try: return self.request.get_input_volume(volume_input['inputName']).input_volume_db
-    except:
-      self.connect()
-      return -1
+    except: return -1
 
   def set_volume(self, input, name):
     '''
@@ -153,9 +163,7 @@ class OBS():
     try:
       self.request.set_input_volume(name, vol_db=int(input))
       return int(input)
-    except:
-      self.connect()
-      return -1
+    except: return -1
     
   # -------------------- Register callback methods --------------------
 
@@ -174,7 +182,7 @@ class OBS():
       callback(self.scene_index)
 
     try: self.event.callback.register(on_current_program_scene_changed)
-    except: self.connect()
+    except: pass
 
   def register_on_stream_change(self, callback):
     '''
@@ -191,7 +199,7 @@ class OBS():
         callback(OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED)
 
     try: self.event.callback.register(on_stream_state_changed)
-    except: self.connect()
+    except: pass
   
   def register_on_record_change(self, callback):
     '''
@@ -208,23 +216,22 @@ class OBS():
         callback(OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED)
 
     try: self.event.callback.register(on_record_state_changed)
-    except: self.connect()
+    except: pass
 
   # -------------------- Stream/recording methods --------------------
 
   def toggle_stream(self):
     try: self.request.toggle_stream()
-    except: self.connect()
+    except: pass
 
 
   def toggle_record(self):
     try: self.request.toggle_record()
-    except: self.connect()
+    except: pass
 
 
 if __name__ == '__main__':
   from dotenv import dotenv_values
-  import time
 
   env = dotenv_values()
 
@@ -233,4 +240,5 @@ if __name__ == '__main__':
 
   while True:
     time.sleep(1)
-    print(obs.update_scenes())
+    obs.update_scenes()
+    print(obs.scene_index)
