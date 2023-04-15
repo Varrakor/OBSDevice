@@ -1,9 +1,9 @@
 '''
 Interface with OBS via websockets
 
-A connection daemon ensures connection every second
+A connection daemon checks the websocket connection every second
 
-If disconnected from OBS, all methods do nothing while connection is reestablished
+If disconnected from OBS, all methods do nothing while connection is reestablished in the daemon thread
 '''
 
 import obsws_python
@@ -11,6 +11,7 @@ import threading
 import time
 
 class OBS():
+
   # class variables
   OUTPUT_STARTED = True
   OUTPUT_STOPPED = False
@@ -32,7 +33,7 @@ class OBS():
     self.scene_index = -1
     self.volume_inputs = []
 
-    self.stream_state = OBS.OUTPUT_STOPPED # TODO: initialise these values
+    self.stream_state = OBS.OUTPUT_STOPPED # TODO: initialise these values on connect
     self.record_state = OBS.OUTPUT_STOPPED 
 
     self.on_scene_change = lambda x: None
@@ -40,7 +41,10 @@ class OBS():
     self.on_record_change = lambda x: None
 
     self.connect()
+
     threading.Thread(target=self.check_connection, daemon=True).start()
+
+  # -------------------- Websocket connection methods --------------------
 
   def connect(self):
     '''
@@ -67,14 +71,14 @@ class OBS():
 
   def check_connection(self, t=1):
     '''
-    Daemon that checks for connection every t seconds and reestablishes lost connection
+    Daemon thread that checks for connection every t seconds and reestablishes a lost connection
     '''
     while True:
       try: self.request.get_version()
       except: self.connect()
       time.sleep(t)
 
-  # -------------------- Scene methods --------------------
+  # -------------------- OBS Scene methods --------------------
 
   def get_scene_index(self, scene_name):
     '''
@@ -114,12 +118,13 @@ class OBS():
     try:
       scene_name = self.scenes[scene_index]['scene_name']
       self.request.set_current_program_scene(scene_name)
+
       if self.verbose: print(f'Switched to {scene_name}')
       return scene_index
     except:
       return -1
 
-  # -------------------- Audio methods --------------------
+  # -------------------- OBS Audio methods --------------------
 
   def update_volume_inputs(self):
     '''
@@ -161,11 +166,23 @@ class OBS():
     @type:      string
     '''
     try:
-      self.request.set_input_volume(name, vol_db=int(input))
-      return int(input)
+      input = int(input)
+      self.request.set_input_volume(name, vol_db=input)
+      return input
     except: return -1
-    
-  # -------------------- Register callback methods --------------------
+
+  # -------------------- OBS Stream/recording methods --------------------
+
+  def toggle_stream(self):
+    try: self.request.toggle_stream()
+    except: pass
+
+
+  def toggle_record(self):
+    try: self.request.toggle_record()
+    except: pass
+
+  # -------------------- Register event callbacks --------------------
 
   def register_on_scene_change(self, callback):
     '''
@@ -218,17 +235,7 @@ class OBS():
     try: self.event.callback.register(on_record_state_changed)
     except: pass
 
-  # -------------------- Stream/recording methods --------------------
-
-  def toggle_stream(self):
-    try: self.request.toggle_stream()
-    except: pass
-
-
-  def toggle_record(self):
-    try: self.request.toggle_record()
-    except: pass
-
+# --------------------------------------------------
 
 if __name__ == '__main__':
   from dotenv import dotenv_values

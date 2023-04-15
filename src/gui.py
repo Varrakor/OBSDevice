@@ -56,9 +56,13 @@ class GUI():
     elif output_state == OBS.OUTPUT_STOPPED: self.rec_button['text'] = 'Start Recording'
 
   def loop(self):
-    self.master.mainloop() # should check for obs disconnect and reconnect
+    self.master.mainloop()
 
-if __name__ == '__main__':
+
+def main():
   from dotenv import dotenv_values
   env = dotenv_values()
   GUI(env['OBS_PASSWORD']).loop()
+
+if __name__ == '__main__':
+  main()
