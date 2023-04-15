@@ -43,8 +43,8 @@ class DeviceInterface():
     key 9, 10  toggle stream and recording
     key 11, 12 change slide to previous and next
     '''
-    try:
-      while True:
+    while True:
+      try:
         if self.serial.in_waiting > 0:
           key = int.from_bytes(self.serial.read(), 'big')
           
@@ -53,8 +53,9 @@ class DeviceInterface():
           elif key == 10: self.obs.toggle_record()
           elif key == 11: ppt.change_slide(ppt.PREVIOUS)
           elif key == 12: ppt.change_slide(ppt.NEXT)
-    except:
-      self.connect()
+          
+      except KeyboardInterrupt: return
+      except: self.connect()
 
 if __name__ == '__main__':
   from dotenv import dotenv_values
