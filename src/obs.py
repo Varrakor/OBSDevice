@@ -136,7 +136,7 @@ class OBS():
     '''
     try:
       inputs = self.request.get_input_list().inputs
-      self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture']
+      self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture' or volume['inputKind'] == 'coreaudio_output_capture']
     except: pass
     return self.volume_inputs
 
