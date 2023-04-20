@@ -54,6 +54,13 @@ class GUI():
   def on_record_change(self, output_state):
     if output_state == OBS.OUTPUT_STARTED: self.rec_button['text'] = 'Stop Recording'
     elif output_state == OBS.OUTPUT_STOPPED: self.rec_button['text'] = 'Start Recording'
+  
+  def force_close(self):
+    """
+    @summary:   Force stop the GUI by destroying it.
+    @author:    Brandon
+    """
+    self.master.destroy()
 
   def loop(self):
     self.master.mainloop()
