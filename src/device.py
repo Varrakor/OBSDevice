@@ -49,13 +49,15 @@ class DeviceInterface():
           key = int.from_bytes(self.serial.read(), 'big')
           
           if key >= 0 and key < 8: self.obs.set_scene(key)
+
           elif key == 9: self.obs.toggle_stream()
           elif key == 10: self.obs.toggle_record()
+
           elif key == 11: ppt.change_slide(ppt.PREVIOUS)
           elif key == 12: ppt.change_slide(ppt.NEXT)
           
       except KeyboardInterrupt: return
-      except: self.connect()
+      except serial.SerialException: self.connect()
 
 if __name__ == '__main__':
   from dotenv import dotenv_values
