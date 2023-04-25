@@ -15,6 +15,6 @@ Example .env contents:
 ```console
 HOST=localhost
 PORT=4455
-PASSWORD=password                   # set in OBS app
+OBS_PASSWORD=password                   # set in OBS app
 SERIAL_PORT=/dev/cu.usbserial-1430  # can be found on Mac with command: ls /dev/cu*
 ```
