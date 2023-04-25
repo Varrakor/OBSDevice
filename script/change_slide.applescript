@@ -1,3 +1,5 @@
+# Run script with one command-line argument: either 126 (previous) or 125 (next)
+
 # Currently does not handle minimised or closed windows
 # PowerPoint will activate, unactivating the current app, but nothing else will happen
 

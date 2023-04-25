@@ -213,7 +213,8 @@ class OBS():
 
     def on_stream_state_changed(data):
       if data.output_state in ['OBS_WEBSOCKET_OUTPUT_STARTED', 'OBS_WEBSOCKET_OUTPUT_STOPPED']:
-        callback(OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED)
+        self.stream_state = OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED
+        callback(self.stream_state)
 
     try: self.event.callback.register(on_stream_state_changed)
     except: pass
@@ -230,7 +231,8 @@ class OBS():
 
     def on_record_state_changed(data):
       if data.output_state in ['OBS_WEBSOCKET_OUTPUT_STARTED', 'OBS_WEBSOCKET_OUTPUT_STOPPED']:
-        callback(OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED)
+        self.record_state = OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED
+        callback(self.record_state)
 
     try: self.event.callback.register(on_record_state_changed)
     except: pass
@@ -247,5 +249,5 @@ if __name__ == '__main__':
 
   while True:
     time.sleep(1)
-    obs.update_scenes()
-    print(obs.scene_index)
+    # obs.update_scenes()
+    # print(obs.scene_index)
