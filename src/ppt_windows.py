@@ -1,6 +1,5 @@
 '''Interface with Microsoft PowerPoint for Windows'''
 import win32com.client as win32
-import platform
 
 app = win32.Dispatch("PowerPoint.Application")
 ppt = app.ActivePresentation
