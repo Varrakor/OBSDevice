@@ -1,12 +1,15 @@
 import tkinter as tk
 from obs import OBS
 import ppt
+import ppt_windows
+import platform
 
 class GUI():
   
   def __init__(self, password, host='localhost', port=4455):
     self.obs = OBS(password, host, port)
     self.master = tk.Tk()
+    self.os = platform.system()
 
     # scene buttons and LEDs
     self.buttons = [tk.Button(self.master, text=i+1, command=lambda scene_index=i: self.obs.set_scene(scene_index)) for i in range(8)]
@@ -23,10 +26,16 @@ class GUI():
     self.rec_button.grid(column=4, row=1)
 
     # powerpoint buttons
-    self.prev_button = tk.Button(self.master, text='Previous', command=lambda: ppt.change_slide(ppt.PREVIOUS))
+    if (self.os == "Windows"):
+      self.prev_button = tk.Button(self.master, text='Previous', command=lambda: ppt_windows.prev_slide())
+    elif (self.os == "Darwin"):
+      self.prev_button = tk.Button(self.master, text='Previous', command=lambda: ppt.change_slide(ppt.PREVIOUS))
     self.prev_button.grid(column=0, row=4)
 
-    self.next_button = tk.Button(self.master, text='Next', command=lambda: ppt.change_slide(ppt.NEXT))
+    if (self.os == "Windows"):
+      self.next_button = tk.Button(self.master, text='Next', command=lambda: ppt_windows.next_slide())
+    elif (self.os == "Darwin"):
+      self.next_button = tk.Button(self.master, text='Next', command=lambda: ppt.change_slide(ppt.NEXT))
     self.next_button.grid(column=1, row=4)
 
     # audio slider
