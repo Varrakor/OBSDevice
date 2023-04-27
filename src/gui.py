@@ -1,8 +1,6 @@
 import tkinter as tk
 from obs import OBS
 import ppt
-import ppt_windows
-import platform
 
 class GUI():
   

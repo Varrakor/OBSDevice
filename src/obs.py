@@ -55,7 +55,7 @@ class OBS():
       self.request = obsws_python.ReqClient(host=self.host, port=self.port, password=self.password)
       self.event = obsws_python.EventClient(host=self.host, port=self.port, password=self.password)
 
-      self.update_scenes()
+      self.get_scenes()
       self.update_volume_inputs()
 
       # register any callbacks
@@ -88,7 +88,7 @@ class OBS():
       if s['scene_name'] == scene_name: return s['scene_index']
     return -1
 
-  def update_scenes(self):
+  def get_scenes(self):
     '''
     Update the current scene index and current scene list
     @return scene_index, scenes
@@ -114,7 +114,7 @@ class OBS():
     Request OBS change scene to scene_index
     @return scene_index if successful else -1
     '''
-    self.update_scenes()
+    self.get_scenes()
     try:
       scene_name = self.scenes[scene_index]['scene_name']
       self.request.set_current_program_scene(scene_name)
@@ -195,7 +195,7 @@ class OBS():
     self.on_scene_change = callback
   
     def on_current_program_scene_changed(data):
-      self.update_scenes()
+      self.get_scenes()
       callback(self.scene_index)
 
     try: self.event.callback.register(on_current_program_scene_changed)
@@ -249,5 +249,5 @@ if __name__ == '__main__':
 
   while True:
     time.sleep(1)
-    # obs.update_scenes()
+    # obs.get_scenes()
     # print(obs.scene_index)
