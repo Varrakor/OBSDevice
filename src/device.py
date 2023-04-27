@@ -12,6 +12,8 @@ class DeviceInterface():
     self.obs = OBS(obs_password, obs_host, obs_port)
     
     self.obs.register_on_scene_change(lambda scene_index: self.send_current_scene(scene_index))
+    self.obs.register_on_stream_change(lambda output_state: self.send_output_state(output_state))
+    self.obs.register_on_record_change(lambda output_state: self.send_output_state(output_state))
 
     self.serial = None
     self.serial_port = serial_port
@@ -45,6 +47,16 @@ class DeviceInterface():
       if scene_index >= 0 and scene_index < 8:
         self.serial.write(int.to_bytes(scene_index, 1, 'big'))
 
+    except KeyboardInterrupt: exit()
+    except: self.connect()
+
+  def send_output_state(self, output_state):
+    try:
+      if output_state == OBS.OUTPUT_STARTED:
+        self.serial.write(int.to_bytes(8, 1, 'big')) # 8 output started
+      elif output_state == OBS.OUTPUT_STOPPED:
+        self.serial.write(int.to_bytes(9, 1, 'big')) # 9 output stopped
+    
     except KeyboardInterrupt: exit()
     except: self.connect()
 
