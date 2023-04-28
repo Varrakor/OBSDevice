@@ -32,9 +32,11 @@ class OBS():
     self.scenes = []
     self.scene_index = -1
     self.volume_inputs = []
+    self.mic = None
 
     self.stream_state = OBS.OUTPUT_STOPPED # TODO: initialise these values on connect
     self.record_state = OBS.OUTPUT_STOPPED 
+    self.mute_state = False
 
     self.on_scene_change = lambda x: None
     self.on_stream_change = lambda x: None
@@ -62,6 +64,10 @@ class OBS():
       self.register_on_scene_change(self.on_scene_change)
       self.register_on_stream_change(self.on_stream_change)
       self.register_on_record_change(self.on_record_change)
+      
+      # ----------------- TO DO ---------------------------
+      # Get the mute state to be registered correctly
+      #self.register_on_mute_change(self.on_mute_change)
 
       if self.verbose: print('Connected')
 
@@ -128,17 +134,41 @@ class OBS():
 
   def update_volume_inputs(self):
     '''
-    @summary:   Get audio inputs (for output capture)
+    @summary:   Get audio inputs
     @author:    Brandon
 
-    @return:    all volume inputs from OBS
+    @return:    the volume inputs of the OBS
     @rtype:     list
     '''
     try:
       inputs = self.request.get_input_list().inputs
-      self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_output_capture' or volume['inputKind'] == 'coreaudio_output_capture']
+      self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_input_capture' or volume['inputKind'] == 'coreaudio_output_capture']
+      self.mic = self.volume_inputs[0]
     except: pass
     return self.volume_inputs
+
+
+  def get_mute_state(self):
+    """
+    @summary:   Get the mute state of the OBS
+    @author:    Brandon
+
+    @return:    True if muted, False otherwise
+    @rtype:     bool
+    """
+    try:
+      return self.request.get_input_mute(self.mic['inputName'])
+    except: pass
+
+  def toggle_mute(self, volume_input):
+    """
+    @summary:   Toggle the mute input of the mic (if there is any)
+    @author:    Brandon
+    """
+    try:
+      self.request.toggle_input_mute(volume_input['inputName'])
+    except: pass
+
 
   def get_volume(self, volume_input):
     '''
@@ -152,7 +182,7 @@ class OBS():
     @rtype:     float
     '''
     try: return self.request.get_input_volume(volume_input['inputName']).input_volume_db
-    except: return -1
+    except: pass
 
   def set_volume(self, input, name):
     '''
@@ -169,7 +199,7 @@ class OBS():
       input = int(input)
       self.request.set_input_volume(name, vol_db=input)
       return input
-    except: return -1
+    except: pass
 
   # -------------------- OBS Stream/recording methods --------------------
 
@@ -236,6 +266,21 @@ class OBS():
 
     try: self.event.callback.register(on_record_state_changed)
     except: pass
+
+  def register_on_mute_change(self, callback):
+
+    # if disconnected, store callback to be registered on reconnect
+    self.on_mute_change = callback
+    #state = self.get_mute_state()
+
+    #print(state)
+    def on_mute_state_changed(data):
+      self.mute_state = self.get_mute_state
+      callback(self.mute_state)
+
+    try: self.event.callback.register(on_mute_state_changed)
+    except Exception as e: print(e) 
+
 
 # --------------------------------------------------
 
