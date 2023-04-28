@@ -29,18 +29,27 @@ class GUI():
     self.next_button = tk.Button(self.master, text='Next', command=lambda: ppt.change_slide(ppt.NEXT))
     self.next_button.grid(column=1, row=4)
 
-    # audio slider
-    for i in range(len(self.obs.volume_inputs)):
-      audio = self.obs.volume_inputs[i]
+
+    # audio slider (only for mic)
+    if len(self.obs.volume_inputs) > 0:
+      audio = self.obs.volume_inputs[0]
       current_volume = self.obs.get_volume(audio)
       slider = tk.Scale(self.master, label=f"{audio['inputName']}", orient='horizontal', from_=-100.0, to=0.0, length=150, command= lambda val, name=audio['inputName']: self.obs.set_volume(val, name))
       slider.set(current_volume)
-      slider.grid(column=5, row=i)
+      slider.grid(column=5, row=0)
+      
+      self.mute_button = tk.Button(self.master, text='Mute' if self.obs.mute_state == OBS.OUTPUT_STOPPED else 'Unmute', command=lambda: self.obs.toggle_mute(audio))
+      self.mute_button.grid(column=5, row=2)
 
     # register OBS callbacks
     self.obs.register_on_scene_change(lambda scene_index: self.on_scene_change(scene_index))
     self.obs.register_on_stream_change(lambda output_state: self.on_stream_change(output_state))
     self.obs.register_on_record_change(lambda output_state: self.on_record_change(output_state))
+    
+    # ----------------- TO DO ---------------------------
+    # Get the mute state to be registered correctly
+
+    #self.obs.register_on_mute_change(lambda output_state: self.on_mute_change(output_state))
 
   def on_scene_change(self, scene_index):
     for i in range(8):
@@ -54,6 +63,10 @@ class GUI():
   def on_record_change(self, output_state):
     if output_state == OBS.OUTPUT_STARTED: self.rec_button['text'] = 'Stop Recording'
     elif output_state == OBS.OUTPUT_STOPPED: self.rec_button['text'] = 'Start Recording'
+  
+  def on_mute_change(self, output_state):
+    if output_state == True: self.mute_button['text'] = 'Unmute'
+    else: self.mute_button['text'] = 'Mute'
   
   def force_close(self):
     """
