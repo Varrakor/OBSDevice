@@ -198,7 +198,14 @@ class OBS():
       self.get_scenes()
       callback(self.scene_index)
 
-    try: self.event.callback.register(on_current_program_scene_changed)
+    # also register the same callback on sceneListChanged 
+    # however websockets does not support callback on scene reordering yet)
+    def on_scene_list_changed(data):
+      on_current_program_scene_changed(data)
+
+    try:
+      self.event.callback.register(on_current_program_scene_changed)
+      self.event.callback.register(on_scene_list_changed)
     except: pass
 
   def register_on_stream_change(self, callback):

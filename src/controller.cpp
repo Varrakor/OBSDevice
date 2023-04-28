@@ -49,7 +49,6 @@ void loop(){
     }
 
     else if (led == 8) digitalWrite(ledPin[8], LOW); // 8 is output_state off
-    
     else if (led == 9) digitalWrite(ledPin[8], HIGH); // 9 is output_state on
   }
 }

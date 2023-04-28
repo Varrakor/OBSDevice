@@ -30,11 +30,10 @@ class DeviceInterface():
     if not self.serial_port: self.detect_port()
     try:
       self.serial = serial.Serial(self.serial_port, baudrate=9600, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-      print(f'Connected to {self.serial_port}')
+      if self.serial: print(f'Connected to {self.serial_port}')
 
-      # send current scene to leds
-      time.sleep(2)
-      self.send_current_scene(self.obs.scene_index)
+      time.sleep(2) # wait for controller to reset
+      self.send_current_scene(self.obs.scene_index) # send current scene to leds
     
     except KeyboardInterrupt: exit()
     except: self.serial = None
@@ -53,9 +52,9 @@ class DeviceInterface():
   def send_output_state(self, output_state):
     try:
       if output_state == OBS.OUTPUT_STARTED:
-        self.serial.write(int.to_bytes(8, 1, 'big')) # 8 output started
+        self.serial.write(int.to_bytes(8, 1, 'big')) # 8 represents output started
       elif output_state == OBS.OUTPUT_STOPPED:
-        self.serial.write(int.to_bytes(9, 1, 'big')) # 9 output stopped
+        self.serial.write(int.to_bytes(9, 1, 'big')) # 9 represents output stopped
     
     except KeyboardInterrupt: exit()
     except: self.connect()
