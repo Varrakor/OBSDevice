@@ -10,6 +10,8 @@ import obsws_python
 import threading
 import time
 
+import inspect
+
 class OBS():
 
   # class variables
@@ -41,6 +43,7 @@ class OBS():
     self.on_scene_change = lambda x: None
     self.on_stream_change = lambda x: None
     self.on_record_change = lambda x: None
+    self.on_mute_change = lambda x: None
 
     self.connect()
 
@@ -67,7 +70,8 @@ class OBS():
       
       # ----------------- TO DO ---------------------------
       # Get the mute state to be registered correctly
-      #self.register_on_mute_change(self.on_mute_change)
+      
+      self.register_on_mute_change(self.on_mute_change)
 
       if self.verbose: print('Connected')
 
@@ -157,16 +161,16 @@ class OBS():
     @rtype:     bool
     """
     try:
-      return self.request.get_input_mute(self.mic['inputName'])
+      self.mute_state = self.request.get_input_mute(self.mic['inputName']).input_muted
+      return self.mute_state
     except: pass
 
-  def toggle_mute(self, volume_input):
+  def toggle_mute(self):
     """
     @summary:   Toggle the mute input of the mic (if there is any)
     @author:    Brandon
     """
-    try:
-      self.request.toggle_input_mute(volume_input['inputName'])
+    try: self.request.toggle_input_mute(self.mic['inputName'])
     except: pass
 
 
@@ -275,18 +279,20 @@ class OBS():
     except: pass
 
   def register_on_mute_change(self, callback):
-
+    '''
+    Register a callback function on mute state change that takes output_state as a parameter
+    @param callback eg. def callback(output_state): pass
+    output_state is either False or True
+    '''
     # if disconnected, store callback to be registered on reconnect
     self.on_mute_change = callback
-    #state = self.get_mute_state()
 
-    #print(state)
     def on_mute_state_changed(data):
-      self.mute_state = self.get_mute_state
+      self.get_mute_state()
       callback(self.mute_state)
 
     try: self.event.callback.register(on_mute_state_changed)
-    except Exception as e: print(e) 
+    except: pass
 
 # --------------------------------------------------
 
