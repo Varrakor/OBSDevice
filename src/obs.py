@@ -288,7 +288,6 @@ class OBS():
     try: self.event.callback.register(on_mute_state_changed)
     except Exception as e: print(e) 
 
-
 # --------------------------------------------------
 
 if __name__ == '__main__':

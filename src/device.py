@@ -61,9 +61,19 @@ class DeviceInterface():
 
   def loop(self):
     '''
-    key 0 - 7  scene numbers to switch to
+    Input:
+    key 0-7  scene numbers to switch to
     key 8, 9  toggle stream and recording
     key 10, 11 change slide to previous and next
+    key 12 toggle mute
+    key 16, 17 rotor decrement and increment
+
+    Output:
+    key 0-7 current scene led
+    key 8 output led off
+    key 9 output led on
+    key 10 mute led off
+    key 11 mute led on
     '''
     while True:
       try:
@@ -79,7 +89,9 @@ class DeviceInterface():
           elif key == 11: ppt.change_slide(ppt.NEXT)
           
       except KeyboardInterrupt: exit()
-      except: self.connect()
+      except Exception as e:
+        print(e)
+        self.connect()
 
 if __name__ == '__main__':
   from dotenv import dotenv_values
