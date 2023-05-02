@@ -31,15 +31,12 @@ class GUI():
 
 
     # audio slider (only for mic)
-    if len(self.obs.inputs) > 0:
-      current_volume = self.obs.get_volume()
-  
-      slider = tk.Scale(self.master, label=f"{self.obs.mic_name}", orient='horizontal', from_=-100.0, to=0.0, length=150, command=lambda vol_db: self.obs.set_volume(vol_db))
-      slider.set(current_volume)
-      slider.grid(column=5, row=0)
-      
-      self.mute_button = tk.Button(self.master, text='Unmute' if self.obs.is_muted else 'Mute', command=self.obs.toggle_mute)
-      self.mute_button.grid(column=5, row=2)
+    slider = tk.Scale(self.master, label=f"{self.obs.mic_name}", orient='horizontal', from_=-100.0, to=0.0, length=150, command=lambda vol_db: self.obs.set_volume(vol_db))
+    slider.set(self.obs.volume)
+    slider.grid(column=5, row=0)
+    
+    self.mute_button = tk.Button(self.master, text='Unmute' if self.obs.is_muted else 'Mute', command=self.obs.toggle_mute)
+    self.mute_button.grid(column=5, row=2)
 
     # register OBS callbacks
     self.obs.register_on_scene_change(lambda scene_index: self.on_scene_change(scene_index))

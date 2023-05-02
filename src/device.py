@@ -62,6 +62,14 @@ class DeviceInterface():
     if is_muted: self.serial.write(int.to_bytes(10, 1, 'big')) # 10 is muted
     else: self.serial.write(int.to_bytes(11, 1, 'big')) # 11 is unmuted
 
+  def decrement_volume(self):
+    self.obs.get_input()
+    self.obs.set_volume(min(0, self.obs.volume - 10))
+
+  def increment_volume(self):
+    self.obs.get_input()
+    self.obs.set_volume(max(-100, self.obs.volume + 10))
+
   def loop(self):
     '''
     Input:
@@ -92,6 +100,9 @@ class DeviceInterface():
           elif key == 11: ppt.next_slide()
           
           elif key == 12: self.obs.toggle_mute()
+
+          elif key == 16: self.decrement_volume()
+          elif key == 17: self.increment_volume()
             
       except KeyboardInterrupt: exit()
       except Exception as e:
