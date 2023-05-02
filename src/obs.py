@@ -61,7 +61,7 @@ class OBS():
       self.event = obsws_python.EventClient(host=self.host, port=self.port, password=self.password)
 
       self.get_scenes()
-      self.update_volume_inputs()
+      self.get_volume_inputs()
 
       # register any callbacks
       self.register_on_scene_change(self.on_scene_change)
@@ -136,7 +136,7 @@ class OBS():
 
   # -------------------- OBS Audio methods --------------------
 
-  def update_volume_inputs(self):
+  def get_volume_inputs(self):
     '''
     @summary:   Get audio inputs
     @author:    Brandon
@@ -280,18 +280,18 @@ class OBS():
 
   def register_on_mute_change(self, callback):
     '''
-    Register a callback function on mute state change that takes output_state as a parameter
-    @param callback eg. def callback(output_state): pass
-    output_state is either False or True
+    Register a callback function on mute state change that takes mute_state as a parameter
+    @param callback eg. def callback(mute_state: bool): pass
+    mute_state is either True or False
     '''
     # if disconnected, store callback to be registered on reconnect
     self.on_mute_change = callback
 
-    def on_mute_state_changed(data):
+    def on_input_mute_state_changed(data):
       self.get_mute_state()
       callback(self.mute_state)
 
-    try: self.event.callback.register(on_mute_state_changed)
+    try: self.event.callback.register(on_input_mute_state_changed)
     except: pass
 
 # --------------------------------------------------
