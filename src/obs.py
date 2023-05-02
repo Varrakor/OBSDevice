@@ -10,13 +10,7 @@ import obsws_python
 import threading
 import time
 
-import inspect
-
 class OBS():
-
-  # class variables
-  OUTPUT_STARTED = True
-  OUTPUT_STOPPED = False
   
   def __init__(self, password, host='localhost', port=4455, verbose=False):
     '''
@@ -33,17 +27,19 @@ class OBS():
     
     self.scenes = []
     self.scene_index = -1
-    self.volume_inputs = []
-    self.mic = None
 
-    self.stream_state = OBS.OUTPUT_STOPPED # TODO: initialise these values on connect
-    self.record_state = OBS.OUTPUT_STOPPED 
-    self.mute_state = False
+    self.inputs = []
+    self.mic_name = ''
+    self.is_muted = False
 
-    self.on_scene_change = lambda x: None
-    self.on_stream_change = lambda x: None
-    self.on_record_change = lambda x: None
-    self.on_mute_change = lambda x: None
+    self.is_streaming = True
+    self.is_recording = True
+
+    fn = lambda x: None
+    self.on_scene_change = fn
+    self.on_stream_change = fn
+    self.on_record_change = fn
+    self.on_mute_change = fn
 
     self.connect()
 
@@ -61,7 +57,8 @@ class OBS():
       self.event = obsws_python.EventClient(host=self.host, port=self.port, password=self.password)
 
       self.get_scenes()
-      self.get_volume_inputs()
+      self.get_outputs()
+      self.get_inputs()
 
       # register any callbacks
       self.register_on_scene_change(self.on_scene_change)
@@ -136,85 +133,47 @@ class OBS():
 
   # -------------------- OBS Audio methods --------------------
 
-  def get_volume_inputs(self):
-    '''
-    @summary:   Get audio inputs
-    @author:    Brandon
-
-    @return:    the volume inputs of the OBS
-    @rtype:     list
-    '''
+  def get_inputs(self):
     try:
       inputs = self.request.get_input_list().inputs
-      self.volume_inputs = [volume for volume in inputs if volume['inputKind'] == 'wasapi_input_capture' or volume['inputKind'] == 'coreaudio_output_capture']
-      self.mic = self.volume_inputs[0]
-    except: pass
-    return self.volume_inputs
-
-
-  def get_mute_state(self):
-    """
-    @summary:   Get the mute state of the OBS
-    @author:    Brandon
-
-    @return:    True if muted, False otherwise
-    @rtype:     bool
-    """
-    try:
-      self.mute_state = self.request.get_input_mute(self.mic['inputName']).input_muted
-      return self.mute_state
-    except: pass
+      self.inputs = [volume for volume in inputs if volume['inputKind'] in ('wasapi_input_capture', 'coreaudio_input_capture')]
+      
+      self.mic_name = self.inputs[0]['inputName']
+      self.is_muted = self.request.get_input_mute(self.mic_name).input_muted
+    except Exception as e: pass
+    return self.inputs
 
   def toggle_mute(self):
-    """
-    @summary:   Toggle the mute input of the mic (if there is any)
-    @author:    Brandon
-    """
-    try: self.request.toggle_input_mute(self.mic['inputName'])
-    except: pass
+    try: self.request.toggle_input_mute(self.mic_name)
+    except Exception as e: pass
 
+  def get_volume(self):
+    try: return self.request.get_input_volume(self.mic_name).input_volume_db
+    except Exception as e: pass
 
-  def get_volume(self, volume_input):
-    '''
-    @summary:   Get the volume of the provided input
-    @author:    Brandon
-
-    @param:     volume_input: the input to get the colume from
-    @type:      Request
-
-    @return:    volume of input in decibels
-    @rtype:     float
-    '''
-    try: return self.request.get_input_volume(volume_input['inputName']).input_volume_db
-    except: pass
-
-  def set_volume(self, input, name):
-    '''
-    @summary:   Set the volume of the provided input in decibels
-    @author:    Brandon
-
-    @param:     input: the volume to set the input to
-    @type:      float
-
-    @param:     name: the name of the input to change volume of
-    @type:      string
-    '''
+  def set_volume(self, vol_db):
     try:
-      input = int(input)
-      self.request.set_input_volume(name, vol_db=input)
-      return input
-    except: pass
+      vol_db = int(vol_db)
+      self.request.set_input_volume(self.mic_name, vol_db=vol_db)
+      return vol_db
+    except Exception as e: pass
 
   # -------------------- OBS Stream/recording methods --------------------
 
+  def get_outputs(self):
+    try:
+      self.is_streaming = self.request.get_stream_status().output_active
+      self.is_recording = self.request.get_record_status().output_active
+    except Exception as e: pass
+
   def toggle_stream(self):
     try: self.request.toggle_stream()
-    except: pass
+    except Exception as e: pass
 
 
   def toggle_record(self):
     try: self.request.toggle_record()
-    except: pass
+    except Exception as e: pass
 
   # -------------------- Register event callbacks --------------------
 
@@ -232,67 +191,62 @@ class OBS():
       self.get_scenes()
       callback(self.scene_index)
 
-    # also register the same callback on sceneListChanged 
-    # however websockets does not support callback on scene reordering yet)
+    # should also register the same callback on sceneListChanged 
+    # however websockets does not support callback on scene reordering yet
     def on_scene_list_changed(data):
       on_current_program_scene_changed(data)
 
     try:
       self.event.callback.register(on_current_program_scene_changed)
       self.event.callback.register(on_scene_list_changed)
-    except: pass
+    except Exception as e: pass
 
   def register_on_stream_change(self, callback):
     '''
-    Register a callback function on stream state change that takes output_state as a parameter
-    @param callback eg. def callback(output_state): pass
-    output_state is either OBS.OUTPUT_STARTED or OBS.OUTPUT_STOPPED
+    Register a callback function on stream state change that takes is_streaming as a parameter
+    @param callback eg. def callback(is_streaming): pass
     '''
 
-    # if disconnected, store callback to be registered on reconnect
     self.on_stream_change = callback
 
     def on_stream_state_changed(data):
       if data.output_state in ['OBS_WEBSOCKET_OUTPUT_STARTED', 'OBS_WEBSOCKET_OUTPUT_STOPPED']:
-        self.stream_state = OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED
-        callback(self.stream_state)
+        self.is_streaming = data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED'
+        callback(self.is_streaming)
 
     try: self.event.callback.register(on_stream_state_changed)
-    except: pass
+    except Exception as e: pass
   
   def register_on_record_change(self, callback):
     '''
-    Register a callback function on record state change that takes output_state as a parameter
-    @param callback eg. def callback(output_state): pass
-    output_state is either OBS.OUTPUT_STARTED or OBS.OUTPUT_STOPPED
+    Register a callback function on record state change that takes is_recording as a parameter
+    @param callback eg. def callback(is_recording): pass
     '''
 
-    # if disconnected, store callback to be registered on reconnect
     self.on_record_change = callback
 
     def on_record_state_changed(data):
       if data.output_state in ['OBS_WEBSOCKET_OUTPUT_STARTED', 'OBS_WEBSOCKET_OUTPUT_STOPPED']:
-        self.record_state = OBS.OUTPUT_STARTED if data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED' else OBS.OUTPUT_STOPPED
-        callback(self.record_state)
+        self.is_recording = data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED'
+        callback(self.is_recording)
 
     try: self.event.callback.register(on_record_state_changed)
-    except: pass
+    except Exception as e: pass
 
   def register_on_mute_change(self, callback):
     '''
-    Register a callback function on mute state change that takes mute_state as a parameter
-    @param callback eg. def callback(mute_state: bool): pass
-    mute_state is either True or False
+    Register a callback function on mute state change that takes is_muted as a parameter
+    @param callback eg. def callback(is_stated: bool): pass
     '''
-    # if disconnected, store callback to be registered on reconnect
+
     self.on_mute_change = callback
 
     def on_input_mute_state_changed(data):
-      self.get_mute_state()
-      callback(self.mute_state)
+      self.get_inputs()
+      callback(self.is_muted)
 
     try: self.event.callback.register(on_input_mute_state_changed)
-    except: pass
+    except Exception as e: pass
 
 # --------------------------------------------------
 

@@ -17,10 +17,13 @@ SCRIPT = pathlib.Path(__file__).parent / '../script/change_slide.applescript'
 if os == 'Windows':
   import win32com.client as win32
   
+def previous_slide():
+  if os == 'Darwin': change_slide_apple(PREVIOUS)
+  elif os == 'Windows': change_slide_windows(PREVIOUS)
 
-def change_slide(key):
-  if os == 'Darwin': change_slide_apple(key)
-  elif os == 'Windows': change_slide_windows(key)
+def next_slide():
+  if os == 'Darwin': change_slide_apple(NEXT)
+  elif os == 'Windows': change_slide_windows(NEXT)
 
 def change_slide_apple(key):
   if key in [PREVIOUS, NEXT]:
@@ -53,5 +56,5 @@ def change_slide_windows(key):
 if __name__ == '__main__':
   while True:
     key = input().strip()
-    if key in 'aw': change_slide(PREVIOUS)
-    else: change_slide(NEXT)
+    if key in 'aw': previous_slide()
+    else: next_slide(NEXT)

@@ -90,16 +90,16 @@ void writeLed(int led) {
 void loop() {
   // leds
   if (Serial.available() > 0) {
-    int led = Serial.read();
-    if (led >= 0 && led <= 7) writeLed(led); // 0-7 is scene LED
-    else if (led == 8) digitalWrite(OUTPUT_PIN, HIGH); // 8 is output_state off
-    else if (led == 9) digitalWrite(OUTPUT_PIN, LOW); // 9 is output_state on
-    // 10 is mute off
-    // 11 is mute on
+    int key = Serial.read();
+    if (key >= 0 && key <= 7) writeLed(key); // 0-7 is scene LED
+    else if (key == 8) digitalWrite(OUTPUT_PIN, HIGH); // 8 is output_state off
+    else if (key == 9) digitalWrite(OUTPUT_PIN, LOW); // 9 is output_state on
+    else if (key == 10) digitalWrite(MUTE_PIN, HIGH);
+    else if (key == 11) digitalWrite(MUTE_PIN, LOW);
   }
 
   // keypad
-  int key = (int) keypad.getKey() - 'a';
+  int key = keypad.getKey() - 'a';
   if (key >= 0) Serial.write(key); // 0-15 from keypad
 
   // rotor

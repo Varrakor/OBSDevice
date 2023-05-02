@@ -9,11 +9,12 @@ import time
 class DeviceInterface():
   
   def __init__(self, obs_password, obs_host='localhost', obs_port=4455, serial_port=None):
-    self.obs = OBS(obs_password, obs_host, obs_port)
+    self.obs = OBS(obs_password, obs_host, obs_port, verbose=True)
     
     self.obs.register_on_scene_change(lambda scene_index: self.send_current_scene(scene_index))
-    self.obs.register_on_stream_change(lambda output_state: self.send_output_state(output_state))
-    self.obs.register_on_record_change(lambda output_state: self.send_output_state(output_state))
+    self.obs.register_on_stream_change(lambda is_streaming: self.send_output_state(is_streaming))
+    self.obs.register_on_record_change(lambda is_recording: self.send_output_state(is_recording))
+    self.obs.register_on_mute_change(lambda is_muted: self.send_mute_state(is_muted))
 
     self.serial = None
     self.serial_port = serial_port
@@ -49,15 +50,17 @@ class DeviceInterface():
     except KeyboardInterrupt: exit()
     except: self.connect()
 
-  def send_output_state(self, output_state):
+  def send_output_state(self, is_started):
     try:
-      if output_state == OBS.OUTPUT_STARTED:
-        self.serial.write(int.to_bytes(8, 1, 'big')) # 8 represents output started
-      elif output_state == OBS.OUTPUT_STOPPED:
-        self.serial.write(int.to_bytes(9, 1, 'big')) # 9 represents output stopped
+      if is_started: self.serial.write(int.to_bytes(8, 1, 'big')) # 8 represents output started
+      else: self.serial.write(int.to_bytes(9, 1, 'big')) # 9 represents output stopped
     
     except KeyboardInterrupt: exit()
     except: self.connect()
+
+  def send_mute_state(self, is_muted):
+    if is_muted: self.serial.write(int.to_bytes(10, 1, 'big')) # 10 is muted
+    else: self.serial.write(int.to_bytes(11, 1, 'big')) # 11 is unmuted
 
   def loop(self):
     '''
@@ -70,10 +73,10 @@ class DeviceInterface():
 
     Output:
     key 0-7 current scene led
-    key 8 output led off
-    key 9 output led on
-    key 10 mute led off
-    key 11 mute led on
+    key 8 output started
+    key 9 output stopped
+    key 10 muted
+    key 11 unmuted
     '''
     while True:
       try:
@@ -85,12 +88,14 @@ class DeviceInterface():
           elif key == 8: self.obs.toggle_stream()
           elif key == 9: self.obs.toggle_record()
 
-          elif key == 10: ppt.change_slide(ppt.PREVIOUS)
-          elif key == 11: ppt.change_slide(ppt.NEXT)
+          elif key == 10: ppt.previous_slide()
+          elif key == 11: ppt.next_slide()
           
+          elif key == 12: self.obs.toggle_mute()
+            
       except KeyboardInterrupt: exit()
       except Exception as e:
-        print(e)
+        # print(e)
         self.connect()
 
 if __name__ == '__main__':
