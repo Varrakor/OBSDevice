@@ -8,7 +8,7 @@ import time
 
 class DeviceInterface():
   
-  def __init__(self, obs_password, obs_host='localhost', obs_port=4455, serial_port=None):
+  def __init__(self, obs_password, obs_host='localhost', obs_port=4455):
     self.obs = OBS(obs_password, obs_host, obs_port, verbose=True)
     
     self.obs.register_on_scene_change(lambda scene_index: self.send_current_scene(scene_index))
@@ -17,8 +17,6 @@ class DeviceInterface():
     self.obs.register_on_mute_change(lambda is_muted: self.send_mute_state(is_muted))
 
     self.serial = None
-    self.serial_port = serial_port
-
     self.connect()
 
   def detect_port(self):
@@ -28,21 +26,20 @@ class DeviceInterface():
           self.serial_port = port.device
 
   def connect(self):
-    if not self.serial_port: self.detect_port()
+    self.detect_port()
     try:
       self.serial = serial.Serial(self.serial_port, baudrate=9600, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
       if self.serial: print(f'Connected to {self.serial_port}')
 
       time.sleep(2) # wait for controller to reset
       self.send_current_scene(self.obs.scene_index) # send current scene to leds
+      self.send_output_state(self.obs.is_streaming or self.obs.is_recording)
+      self.send_mute_state(self.obs.is_muted)
     
     except KeyboardInterrupt: exit()
     except: self.serial = None
 
   def send_current_scene(self, scene_index):
-    '''
-    Callback on scene change, to be set in the obs object
-    '''
     try:
       if scene_index >= 0 and scene_index < 8:
         self.serial.write(int.to_bytes(scene_index, 1, 'big'))
@@ -64,11 +61,11 @@ class DeviceInterface():
 
   def decrement_volume(self):
     self.obs.get_input()
-    self.obs.set_volume(min(0, self.obs.volume - 10))
+    self.obs.set_volume(max(-100, self.obs.volume - 10))
 
   def increment_volume(self):
     self.obs.get_input()
-    self.obs.set_volume(max(-100, self.obs.volume + 10))
+    self.obs.set_volume(min(0, self.obs.volume + 10))
 
   def loop(self):
     '''

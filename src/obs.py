@@ -28,16 +28,14 @@ class OBS():
     self.scenes = []
     self.scene_index = -1
 
-    # self.inputs = []
-
     self.mic_name = ''
-    self.volume = 0
+    self.volume = 1
     self.is_muted = False
 
-    self.is_streaming = True
-    self.is_recording = True
+    self.is_streaming = False
+    self.is_recording = False
 
-    fn = lambda x: None
+    fn = lambda _: None
     self.on_scene_change = fn
     self.on_stream_change = fn
     self.on_record_change = fn
@@ -66,10 +64,6 @@ class OBS():
       self.register_on_scene_change(self.on_scene_change)
       self.register_on_stream_change(self.on_stream_change)
       self.register_on_record_change(self.on_record_change)
-      
-      # ----------------- TO DO ---------------------------
-      # Get the mute state to be registered correctly
-      
       self.register_on_mute_change(self.on_mute_change)
 
       if self.verbose: print('Connected')
@@ -156,7 +150,7 @@ class OBS():
       vol_db = int(vol_db)
       self.request.set_input_volume(self.mic_name, vol_db=vol_db)
       self.volume = vol_db
-    except Exception as e: return 1 # invalif valid...?
+    except Exception as e: return 1
     return self.volume
 
   # -------------------- OBS Stream/recording methods --------------------
@@ -219,13 +213,7 @@ class OBS():
     except Exception as e: pass
   
   def register_on_record_change(self, callback):
-    '''
-    Register a callback function on record state change that takes is_recording as a parameter
-    @param callback eg. def callback(is_recording): pass
-    '''
-
     self.on_record_change = callback
-
     def on_record_state_changed(data):
       if data.output_state in ['OBS_WEBSOCKET_OUTPUT_STARTED', 'OBS_WEBSOCKET_OUTPUT_STOPPED']:
         self.is_recording = data.output_state == 'OBS_WEBSOCKET_OUTPUT_STARTED'
@@ -237,7 +225,7 @@ class OBS():
   def register_on_mute_change(self, callback):
     '''
     Register a callback function on mute state change that takes is_muted as a parameter
-    @param callback eg. def callback(is_stated: bool): pass
+    @param callback eg. def callback(is_muted: bool): pass
     '''
 
     self.on_mute_change = callback
