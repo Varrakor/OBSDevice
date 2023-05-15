@@ -23,7 +23,7 @@ class DeviceInterface():
   def detect_port(self):
     ports = serial.tools.list_ports.comports(include_links=False)
     for port in ports:
-        if 'usbserial' in port.device: return port.device
+        if 'usbserial' in port.device or 'USB-SERIAL' in port.description: return port.device
     return None
 
   def connect(self):
@@ -118,3 +118,4 @@ if __name__ == '__main__':
   
   d = DeviceInterface(env['OBS_PASSWORD'])
   d.loop()
+  #print(d.detect_port())
