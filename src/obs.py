@@ -66,7 +66,7 @@ class OBS():
       self.register_on_record_change(self.on_record_change)
       self.register_on_mute_change(self.on_mute_change)
 
-      if self.verbose: print('Connected')
+      if self.verbose: print('Connected to OBS')
 
     except:
       self.request, self.event = None, None

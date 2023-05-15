@@ -16,18 +16,21 @@ class DeviceInterface():
     self.obs.register_on_record_change(lambda is_recording: self.send_output_state(is_recording))
     self.obs.register_on_mute_change(lambda is_muted: self.send_mute_state(is_muted))
 
+    self.serial_port = None
     self.serial = None
     self.connect()
 
   def detect_port(self):
     ports = serial.tools.list_ports.comports(include_links=False)
     for port in ports:
-        if 'usbserial' in port.device:
-          self.serial_port = port.device
+        if 'usbserial' in port.device: return port.device
+    return None
 
   def connect(self):
-    self.detect_port()
     try:
+      self.serial_port = self.detect_port()
+      if not self.serial_port: raise Exception('Could not detect serial port.')
+
       self.serial = serial.Serial(self.serial_port, baudrate=9600, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
       if self.serial: print(f'Connected to {self.serial_port}')
 
@@ -37,7 +40,10 @@ class DeviceInterface():
       self.send_mute_state(self.obs.is_muted)
     
     except KeyboardInterrupt: exit()
-    except: self.serial = None
+    except Exception as e:
+      time.sleep(1)
+      print(e)
+      self.serial = None
 
   def send_current_scene(self, scene_index):
     try:
@@ -109,4 +115,6 @@ class DeviceInterface():
 if __name__ == '__main__':
   from dotenv import dotenv_values
   env = dotenv_values()
-  DeviceInterface(env['OBS_PASSWORD']).loop()
+  
+  d = DeviceInterface(env['OBS_PASSWORD'])
+  d.loop()
