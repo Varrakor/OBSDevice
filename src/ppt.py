@@ -8,12 +8,12 @@ import platform
 
 os = platform.system()
 
-#Variables for Mac:
+# Mac
 PREVIOUS = 126 # key code
 NEXT = 125
 SCRIPT = pathlib.Path(__file__).parent / '../script/change_slide.applescript'
 
-#Variables for Win:
+# Windows
 if os == 'Windows':
   import win32com.client as win32
   
