@@ -1,18 +1,47 @@
 #include <Arduino.h>
 #include <Keypad.h>
 
-// ----- leds -----
+// ----- lEDs -----
 
 #define NUM_SCENES 8
 
-#define OUTPUT_PIN 13
-#define MUTE_PIN 14
+#define DATA_PIN 10
+#define LATCH_PIN 11
+#define CLOCK_PIN 12
 
-#define S0 17
-#define S1 18
-#define S2 19
+byte bytes[] = { 0xFF, 0xFF };
 
-int binary[NUM_SCENES][3] = { {0, 0, 0}, {0, 0, 1}, {0, 1, 0}, {0, 1, 1}, {1, 0, 0}, {1, 0, 1}, {1, 1, 0}, {1, 1, 1} };
+/**
+ * @param key 0-7 is scene LED
+ * 8, 9 is stream/record on, off
+ * 10, 11 is mute on, off
+ */
+void writeLED(int key) {
+  digitalWrite(LATCH_PIN, LOW);
+  
+  // scenes
+  if (key >= 0 && key < NUM_SCENES) {
+    bytes[0] = 0xFF;
+    bitClear(bytes[0], key);
+  }
+
+  else if (key == 8) bitClear(bytes[1], 0); // stream on
+  else if (key == 9) bitSet(bytes[1], 0); // stream on
+  else if (key == 10) bitClear(bytes[1], 1); // mute on
+  else if (key == 11) bitSet(bytes[1], 1); // mute off
+  
+  shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, bytes[0]);
+  shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, bytes[1]);
+
+  digitalWrite(LATCH_PIN, HIGH);
+}
+
+void setupLEDs() {
+  pinMode(DATA_PIN, OUTPUT);
+  pinMode(LATCH_PIN, OUTPUT);
+  pinMode(CLOCK_PIN, OUTPUT);
+  writeLED(-1);
+}
 
 // ----- keypad -----
 
@@ -40,7 +69,9 @@ int aState;
 int aLastState; 
 
 void setupRotor() {
-  aLastState = digitalRead(ROTOR_CLK);   
+  pinMode(ROTOR_CLK, INPUT);
+  pinMode(ROTOR_DT, INPUT);
+  aLastState = digitalRead(ROTOR_CLK); 
 }
 
 /**
@@ -67,35 +98,16 @@ int getRotor() {
 
 void setup() {
   Serial.begin(9600);
-  
-  // leds
-  int leds[5] = { S0, S1, S2, OUTPUT_PIN, MUTE_PIN };
-  for (int i = 0; i < 5; ++i) {
-    pinMode(leds[i], OUTPUT);
-    digitalWrite(leds[i], LOW);
-  }
-  
-  // rotor
+  setupLEDs();
   setupRotor();
-  pinMode(ROTOR_CLK, INPUT);
-  pinMode(ROTOR_DT, INPUT);
-}
-
-void writeLed(int led) {
-  digitalWrite(S2, binary[led][0]);
-  digitalWrite(S1, binary[led][1]);
-  digitalWrite(S0, binary[led][2]);
+  
 }
 
 void loop() {
   // leds
   if (Serial.available() > 0) {
     int key = Serial.read();
-    if (key >= 0 && key <= 7) writeLed(key); // 0-7 is scene LED
-    else if (key == 8) digitalWrite(OUTPUT_PIN, HIGH); // 8 is output_state off
-    else if (key == 9) digitalWrite(OUTPUT_PIN, LOW); // 9 is output_state on
-    else if (key == 10) digitalWrite(MUTE_PIN, HIGH);
-    else if (key == 11) digitalWrite(MUTE_PIN, LOW);
+    writeLED(key);
   }
 
   // keypad
