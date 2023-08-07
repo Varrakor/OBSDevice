@@ -76,11 +76,10 @@ class DeviceInterface():
   def loop(self):
     '''
     Input:
-    key 0-7  scene numbers to switch to
-    key 8, 9  toggle stream and recording
-    key 10, 11 change slide to previous and next
-    key 12 toggle mute
-    key 16, 17 rotor decrement and increment
+    key 0-7  scenes
+    key 8, 9, 10 toggle stream/recording/mute
+    key 11, 12 prev/next slide
+    key 13, 14 rotor decrement/increment
 
     Output:
     key 0-7 current scene led
@@ -93,19 +92,19 @@ class DeviceInterface():
       try:
         if self.serial.in_waiting > 0:
           key = int.from_bytes(self.serial.read(), 'big')
+          print(key)
           
           if key >= 0 and key <= 7: self.obs.set_scene(key)
 
           elif key == 8: self.obs.toggle_stream()
           elif key == 9: self.obs.toggle_record()
-
-          elif key == 10: ppt.previous_slide()
-          elif key == 11: ppt.next_slide()
+          elif key == 10: self.obs.toggle_mute()
           
-          elif key == 12: self.obs.toggle_mute()
+          elif key == 11: ppt.previous_slide()
+          elif key == 12: ppt.next_slide()
 
-          elif key == 16: self.decrement_volume()
-          elif key == 17: self.increment_volume()
+          elif key == 13: self.decrement_volume()
+          elif key == 14: self.increment_volume()
             
       except KeyboardInterrupt: exit()
       except Exception as e:
