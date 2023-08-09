@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <Encoder.h>
+#include <ShiftRegister74HC595.h>
 
 #define NUM_SCENES 8
 
@@ -6,32 +8,24 @@
 #define LED_LATCH_PIN 8
 #define LED_CLOCK_PIN 9
 
-uint16_t leds = 0xFFFF;
+ShiftRegister74HC595<2> sr(LED_DATA_PIN, LED_CLOCK_PIN, LED_LATCH_PIN);
+byte leds[] = { 0xFF, 0x00 };
 
 void setLED(int key) {
   if (key >= 0 && key < NUM_SCENES) {
-    leds |= 0x00FF;
-    bitClear(leds, key);
+    for (int i = 0; i < NUM_SCENES; ++i) sr.set(i, HIGH);
+    sr.set(key, LOW);
   }
   else if (key == 8 || key == 10) {
-    bitClear(leds, key == 8 ? 8 : 9);
+    sr.set(key == 8 ? 8 : 9, LOW);
   }
   else if (key == 9 || key == 11) {
-    bitSet(leds, key == 9 ? 8 : 9);
+    sr.set(key == 9 ? 8 : 9, HIGH);
   }
-
-  digitalWrite(LED_LATCH_PIN, LOW);
-  shiftOut(LED_DATA_PIN, LED_CLOCK_PIN, MSBFIRST, (byte) ((leds >> 8) & 0x00FF));
-  shiftOut(LED_DATA_PIN, LED_CLOCK_PIN, MSBFIRST, (byte) (leds & 0x00FF));
-  digitalWrite(LED_LATCH_PIN, HIGH);
 }
 
 void setupLEDs() {
-  Serial.begin(9600);
-  pinMode(LED_LATCH_PIN, OUTPUT);
-  pinMode(LED_DATA_PIN, OUTPUT);  
-  pinMode(LED_CLOCK_PIN, OUTPUT);
-  setLED(-1);
+  sr.setAllHigh();
 }
 
 void setLEDs() {
@@ -43,9 +37,9 @@ void setLEDs() {
 
 // ----- buttons -----
 
-#define BUTTON_DATA_PIN 2
-#define BUTTON_CLOCK_PIN 3
-#define BUTTON_LATCH_PIN 4
+#define BUTTON_DATA_PIN 4
+#define BUTTON_CLOCK_PIN 5
+#define BUTTON_LATCH_PIN 6
 
 uint16_t prevButtons = 0xFFFF;
 
@@ -98,50 +92,28 @@ void getButtons() {
   prevButtons = buttons;
 }
 
-// ----- rotor -----
+// ----- rotary encoder -----
 
-#define ROTOR_CLK 5
-#define ROTOR_DT 6
+#define ENC_A 2 // the two interrupt pins
+#define ENC_B 3
 
-#define FIDELITY 1
+#define ENCODER_DEC 13
+#define ENCODER_INC 14
 
-int counter = 0; 
-int lastState = 0;
+Encoder Enc(ENC_A, ENC_B);
 
-int aState;
-int aLastState; 
+long pos = 0;
 
-#define ROTOR_DEBOUNCE_TIME 0 // milliseconds
-
-unsigned long lastRotorDebounce = 0;
-
-// keys
-#define ROTOR_DEC 13
-#define ROTOR_INC 14
-
-void setupRotor() {
-  pinMode(ROTOR_CLK, INPUT_PULLUP);
-  pinMode(ROTOR_DT, INPUT_PULLUP);
-  aLastState = digitalRead(ROTOR_CLK); 
+void setupEncoder() {
+  pos = Enc.read();
 }
 
-void getRotor() {
-  int val = 0;
-  aState = digitalRead(ROTOR_CLK);
-  unsigned long time = millis();
-
-  if (aState != aLastState && time - lastRotorDebounce > ROTOR_DEBOUNCE_TIME) {
-    if (digitalRead(ROTOR_DT) != aState) ++counter; 
-    else --counter; 
-
-    if (abs(counter - lastState) >= FIDELITY) {
-      val = counter > lastState ? ROTOR_INC : ROTOR_DEC;
-      lastState = counter;
-    }
-    lastRotorDebounce = time;
-  } 
-  aLastState = aState;
-  if (val) Serial.write(val);
+void getEncoder() {
+  long newPos = Enc.read();
+  if (abs(newPos - pos) >= 2) {
+    Serial.write(newPos < pos ? ENCODER_INC : ENCODER_DEC);
+    pos = newPos;
+  }
 }
 
 // -----------------
@@ -150,12 +122,12 @@ void setup() {
   Serial.begin(9600);
   setupLEDs();
   setupButtons();
-  setupRotor();
+  setupEncoder();
 }
 
 void loop() {
   setLEDs();
   getButtons();
-  getRotor();
+  getEncoder();
 }
 
