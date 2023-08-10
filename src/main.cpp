@@ -9,7 +9,6 @@
 #define LED_CLOCK_PIN 9
 
 ShiftRegister74HC595<2> sr(LED_DATA_PIN, LED_CLOCK_PIN, LED_LATCH_PIN);
-byte leds[] = { 0xFF, 0x00 };
 
 void setLED(int key) {
   if (key >= 0 && key < NUM_SCENES) {
