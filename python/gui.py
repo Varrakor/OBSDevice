@@ -31,7 +31,7 @@ class GUI():
 
 
     # audio slider (only for mic)
-    slider = tk.Scale(self.master, label=f"{self.obs.mic_name}", orient='horizontal', from_=-100.0, to=0.0, length=150, command=lambda vol_db: self.obs.set_volume(vol_db))
+    slider = tk.Scale(self.master, label=f"{self.obs.mic_name}", orient='horizontal', from_=-100.0, to=0.0, length=150, resolution=5, command=lambda vol_db: self.obs.set_volume(vol_db))
     slider.set(self.obs.volume)
     slider.grid(column=5, row=0)
     
