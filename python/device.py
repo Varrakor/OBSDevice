@@ -67,11 +67,11 @@ class DeviceInterface():
 
   def decrement_volume(self):
     self.obs.get_input()
-    self.obs.set_volume(max(-100, self.obs.volume - 5))
+    self.obs.decrement_volume()
 
   def increment_volume(self):
     self.obs.get_input()
-    self.obs.set_volume(min(0, self.obs.volume + 5))
+    self.obs.increment_volume()
 
   def loop(self):
     '''
