@@ -157,7 +157,7 @@ class OBS():
       actual_vol_db = -self.lvls[index]
       self.request.set_input_volume(self.mic_name, vol_db=actual_vol_db)
       self.volume = vol_db
-    except Exception as e: return 1
+    except Exception as e: pass
     return self.volume
 
   # -------------------- OBS Stream/recording methods --------------------

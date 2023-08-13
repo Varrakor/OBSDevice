@@ -12,7 +12,9 @@ ShiftRegister74HC595<2> sr(LED_DATA_PIN, LED_CLOCK_PIN, LED_LATCH_PIN);
 
 void setLED(int key) {
   if (key >= 0 && key < NUM_SCENES) {
-    for (int i = 0; i < NUM_SCENES; ++i) sr.set(i, HIGH);
+    for (int i = 0; i < NUM_SCENES; ++i) {
+      sr.set(i, HIGH);
+    }
     sr.set(key, LOW);
   }
   else if (key == 8 || key == 10) {
