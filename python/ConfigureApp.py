@@ -14,7 +14,11 @@ class ConfigureApp():
         self.gui = ''
 
         # Set up password field for configuration app
-        def_password = env['OBS_PASSWORD']
+        if 'OBS_PASSWORD' in env.keys():
+            def_password = env['OBS_PASSWORD']
+        else:
+            def_password = 'password'
+        
         self.passwordLabel = tk.Label(self.master, text="OBS Password:", width=20)
         self.passwordLabel.grid(column=0, row=0)
         self.password = tk.Entry(self.master, width=30)
@@ -22,7 +26,11 @@ class ConfigureApp():
         self.password.grid(column=1, row=0, padx=10, pady=10)
 
         # Set up host field for configuration app
-        def_host = env['HOST']
+        if 'HOST' in env.keys():
+            def_host = env['HOST']
+        else:
+            def_host = 'localhost'
+        
         self.hostLabel = tk.Label(self.master, text="Host:", width=20)
         self.hostLabel.grid(column=0, row=1)
         self.host = tk.Entry(self.master, width=30)
@@ -30,7 +38,11 @@ class ConfigureApp():
         self.host.grid(column=1, row=1, padx=10, pady=10)
 
         # Set up port field for configuration app
-        def_port = env['PORT']
+        if 'PORT' in env.keys():
+            def_port = env['PORT']
+        else:
+            def_port = '4455'
+        
         self.portLabel = tk.Label(self.master, text="Port:", width=20)
         self.portLabel.grid(column=0, row=2)
         self.port = tk.Entry(self.master, width=30)
