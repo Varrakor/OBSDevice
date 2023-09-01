@@ -24,6 +24,7 @@ class OBS():
 
     # Create list of values to increment volume slider
     self.lvls = np.logspace(0, 2, 20)
+    self.lvls = [-lvl for lvl in self.lvls]
     self.lvls = np.insert(self.lvls, 0, 0)
     
     # websocket objects
@@ -140,25 +141,44 @@ class OBS():
       inputs = [volume for volume in req if volume['inputKind'] in ('wasapi_input_capture', 'coreaudio_input_capture')]
       
       self.mic_name = inputs[0]['inputName']
-      self.volume = self.request.get_input_volume(self.mic_name).input_volume_db
+      self.volume = self.get_current_volume()
       self.is_muted = self.request.get_input_mute(self.mic_name).input_muted
 
-    except Exception as e: pass
+    except: pass
     return self.volume
+  
+  def get_current_volume(self):
+    return self.request.get_input_volume(self.mic_name).input_volume_db
 
   def toggle_mute(self):
     try: self.request.toggle_input_mute(self.mic_name)
-    except Exception as e: pass
+    except: pass
+  
+  def increment_volume(self):
+    self.volume = self.get_current_volume()
+    increments = list()
+    for lvl in self.lvls:
+      # Avoid gettting a volume that is very close to the current volume
+      if lvl > self.volume and abs(self.volume - lvl) > 0.01:
+        increments.append(lvl)
+    
+    if len(increments) > 0:
+      closest = min(increments, key=lambda x:abs(x-self.volume))
+      self.request.set_input_volume(self.mic_name, vol_db=closest)
+      self.volume = closest
 
-  def set_volume(self, vol_db):
-    try:
-      vol_db = int(vol_db)
-      index = int(-int(vol_db)/5)
-      actual_vol_db = -self.lvls[index]
-      self.request.set_input_volume(self.mic_name, vol_db=actual_vol_db)
-      self.volume = vol_db
-    except Exception as e: pass
-    return self.volume
+  def decrement_volume(self):
+    self.volume = self.get_current_volume()
+    decrements = list()
+    for lvl in self.lvls:
+      # Avoid gettting a volume that is very close to the current volume
+      if lvl < self.volume and abs(self.volume - lvl) > 0.01:
+        decrements.append(lvl)
+    
+    if len(decrements) > 0:
+      closest = min(decrements, key=lambda x:abs(x-self.volume))
+      self.request.set_input_volume(self.mic_name, vol_db=closest)
+      self.volume = closest
 
   # -------------------- OBS Stream/recording methods --------------------
 
@@ -166,16 +186,16 @@ class OBS():
     try:
       self.is_streaming = self.request.get_stream_status().output_active
       self.is_recording = self.request.get_record_status().output_active
-    except Exception as e: pass
+    except: pass
 
   def toggle_stream(self):
     try: self.request.toggle_stream()
-    except Exception as e: pass
+    except: pass
 
 
   def toggle_record(self):
     try: self.request.toggle_record()
-    except Exception as e: pass
+    except: pass
 
   # -------------------- Register event callbacks --------------------
 
@@ -201,7 +221,7 @@ class OBS():
     try:
       self.event.callback.register(on_current_program_scene_changed)
       self.event.callback.register(on_scene_list_changed)
-    except Exception as e: pass
+    except: pass
 
   def register_on_stream_change(self, callback):
     '''
@@ -217,7 +237,7 @@ class OBS():
         callback(self.is_streaming)
 
     try: self.event.callback.register(on_stream_state_changed)
-    except Exception as e: pass
+    except: pass
   
   def register_on_record_change(self, callback):
     self.on_record_change = callback
@@ -227,7 +247,7 @@ class OBS():
         callback(self.is_recording)
 
     try: self.event.callback.register(on_record_state_changed)
-    except Exception as e: pass
+    except: pass
 
   def register_on_mute_change(self, callback):
     '''
@@ -242,7 +262,7 @@ class OBS():
       callback(self.is_muted)
 
     try: self.event.callback.register(on_input_mute_state_changed)
-    except Exception as e: pass
+    except: pass
 
 # --------------------------------------------------
 

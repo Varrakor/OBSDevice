@@ -1,5 +1,13 @@
+#define ENCODER_OPTIMIZE_INTERRUPTS
+
 #include <Arduino.h>
 #include <Encoder.h>
+#include <ShiftRegister74HC595.h>
+
+#define NUM_SCENES 8
+
+// LEDs
+
 #include <ShiftRegister74HC595.h>
 
 #define NUM_SCENES 8
@@ -13,34 +21,32 @@ ShiftRegister74HC595<2> sr(LED_DATA_PIN, LED_CLOCK_PIN, LED_LATCH_PIN);
 void setLED(int key) {
   if (key >= 0 && key < NUM_SCENES) {
     for (int i = 0; i < NUM_SCENES; ++i) {
-      sr.set(i, HIGH);
+      sr.set(i, LOW);
     }
-    sr.set(key, LOW);
+    sr.set(key, HIGH);
   }
-  else if (key == 8 || key == 10) {
-    sr.set(key == 8 ? 8 : 9, LOW);
-  }
-  else if (key == 9 || key == 11) {
-    sr.set(key == 9 ? 8 : 9, HIGH);
-  }
+  else if (key == 8) sr.set(8, HIGH);
+  else if (key == 9) sr.set(8, LOW);
+  else if (key == 10) sr.set(9, HIGH);
+  else if (key == 11) sr.set(9, LOW);
 }
 
 void setupLEDs() {
-  sr.setAllHigh();
+  sr.setAllLow();
 }
 
 void setLEDs() {
   if (Serial.available() > 0) {
     int key = Serial.read();
-    setLED(key);
+    if (key >= 0 && key <= 11) setLED(key);
   }
 }
 
 // ----- buttons -----
 
 #define BUTTON_DATA_PIN 4
-#define BUTTON_CLOCK_PIN 5
-#define BUTTON_LATCH_PIN 6
+#define BUTTON_LATCH_PIN 5
+#define BUTTON_CLOCK_PIN 6
 
 uint16_t prevButtons = 0xFFFF;
 
@@ -87,6 +93,7 @@ void getButtons() {
       time - lastButtonDebounce > BUTTON_DEBOUNCE_TIME
     ) {
       Serial.write(i);
+      // Serial.print(i);
       lastButtonDebounce = time;
     }
   }
