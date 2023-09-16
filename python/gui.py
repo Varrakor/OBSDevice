@@ -1,11 +1,11 @@
 import tkinter as tk
-from obs import OBS
+import obs
 import ppt
 
 class GUI():
   
-  def __init__(self, password, host='localhost', port=4455):
-    self.obs = OBS(password, host, port)
+  def __init__(self, password, host='localhost', port=obs.DEFAULT_PORT):
+    self.obs = obs.OBS(password, host, port)
     self.master = tk.Tk()
 
     # scene buttons and LEDs

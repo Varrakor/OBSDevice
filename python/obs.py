@@ -11,9 +11,11 @@ import threading
 import time
 import numpy as np
 
+DEFAULT_PORT = 4455
+
 class OBS():
   
-  def __init__(self, password, host='localhost', port=4455, verbose=False):
+  def __init__(self, host='localhost', port=DEFAULT_PORT, password='', verbose=False):
     '''
     @param password OBS websocket password set in OBS app settings
     '''
@@ -30,6 +32,8 @@ class OBS():
     # websocket objects
     self.request = None
     self.event = None
+
+    self.connected = False
     
     self.scenes = []
     self.scene_index = -1
@@ -46,6 +50,9 @@ class OBS():
     self.on_stream_change = fn
     self.on_record_change = fn
     self.on_mute_change = fn
+
+    self.connect_callback = lambda: None
+    self.disconnect_callback = lambda: None
 
     self.connect()
 
@@ -73,9 +80,14 @@ class OBS():
       self.register_on_mute_change(self.on_mute_change)
 
       if self.verbose: print('Connected to OBS')
+      self.connected = True
+      self.connect_callback()
 
     except:
-      self.request, self.event = None, None
+      self.request = None
+      self.event = None
+      self.connected = False
+      self.disconnect_callback()
       if self.verbose: print('Could not connect to OBS')
 
   def check_connection(self, t=1):
@@ -83,8 +95,13 @@ class OBS():
     Daemon thread that checks for connection every t seconds and reestablishes a lost connection
     '''
     while True:
-      try: self.request.get_version()
-      except: self.connect()
+      try:
+        self.request.get_version()
+        # scenes = self.request.get_scene_list().scenes
+        # self.scenes = sorted(scenes, key=lambda s: s['scene_index'])
+      except Exception as e:
+        if self.verbose: print(e)
+        self.connect()
       time.sleep(t)
 
   # -------------------- OBS Scene methods --------------------

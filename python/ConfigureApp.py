@@ -2,7 +2,7 @@ import tkinter as tk
 
 from dotenv import dotenv_values
 from gui import GUI
-
+import obs
 
 class ConfigureApp():
     def __init__(self):
@@ -41,7 +41,7 @@ class ConfigureApp():
         if 'PORT' in env.keys():
             def_port = env['PORT']
         else:
-            def_port = '4455'
+            def_port = obs.DEFAULT_PORT
         
         self.portLabel = tk.Label(self.master, text="Port:", width=20)
         self.portLabel.grid(column=0, row=2)
