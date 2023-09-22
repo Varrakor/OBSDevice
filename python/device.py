@@ -30,18 +30,22 @@ class DeviceInterface():
     self.connected = False
     self.connect()
 
+  @staticmethod
+  def is_usb(port):
+    return 'usbserial' in port.device or 'USB-SERIAL' in port.description
+
   def get_ports(self):
-    self.serial_ports = serial.tools.list_ports.comports(include_links=False)
+    self.serial_ports = [p for p in serial.tools.list_ports.comports(include_links=False) if self.is_usb(p)]
     return self.serial_ports
   
   def set_port(self, name):
     self.serial_port = name
 
   def auto_set_port(self):
-    for port in self.get_ports():
-      if 'usbserial' in port.device or 'USB-SERIAL' in port.description:
-        self.serial_port = port.device
-    return None
+    '''choose first serial port that matches the usb criteria'''
+    self.get_ports()
+    if self.serial_ports:
+      self.serial_port = self.serial_ports[0].device
 
   def connect(self):
     try:

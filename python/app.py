@@ -3,9 +3,17 @@ import device
 import pathlib
 import json
 import obs
+import threading
 
 path = pathlib.Path(__file__).parent
 file = path / 'data.json'
+
+# POLL_TIME = 500 # ms
+EMPTY_PORT_MSG = 'No port detected'
+
+GEOMETRY = '400x300'
+COL0 = 120
+COL1 = 250
 
 class App():
 	def __init__(self, verbose=False):
@@ -25,19 +33,28 @@ class App():
 			verbose=verbose
 		)
 
+		threading.Thread(daemon=True, target=self.interface.loop).start()
+
 		self.master = tk.Tk()
-		self.master.geometry('400x200')
-		self.master.after(0, self.interface.poll)
+		self.master.geometry(GEOMETRY)
+
+		master_frame = tk.Frame(self.master)
+		master_frame.grid(row=0, column=0, padx=10, pady=10)
 
 		# Connect lights
 
-		label = tk.Label(self.master, text='OBS connection')
-		label.grid(row=0, column=0)
+		light_frame = tk.LabelFrame(master_frame, text='Connection')
+		light_frame.grid(row=0, column=0)
+		light_frame.columnconfigure(0, minsize=COL0)
+		light_frame.columnconfigure(1, minsize=COL1)
+
+		label = tk.Label(light_frame, text='OBS connection')
+		label.grid(row=0, column=0, sticky='E', padx=5, pady=5)
 
 		d = 20
-		self.obs_canvas = tk.Canvas(self.master, width=d, height=d)
+		self.obs_canvas = tk.Canvas(light_frame, width=d, height=d)
 		self.obs_light = self.obs_canvas.create_oval(5, 5, d, d, fill='red', outline='')
-		self.obs_canvas.grid(row=0, column=1)
+		self.obs_canvas.grid(row=0, column=1, sticky='W', padx=5, pady=5)
 
 		def on_obs_connect():
 			self.obs_canvas.itemconfig(self.obs_light, fill='green')
@@ -48,17 +65,22 @@ class App():
 		self.interface.obs.connect_callback = on_obs_connect
 		self.interface.obs.disconnect_callback = on_obs_disconnect
 
-		label = tk.Label(self.master, text='Serial connection')
-		label.grid(row=1, column=0)
+		label = tk.Label(light_frame, text='Serial connection')
+		label.grid(row=1, column=0, sticky='E', padx=5, pady=5)
 
-		self.serial_canvas = tk.Canvas(self.master, width=d, height=d)
+		self.serial_canvas = tk.Canvas(light_frame, width=d, height=d)
 		self.serial_light = self.serial_canvas.create_oval(5, 5, d, d, fill='red', outline='')
-		self.serial_canvas.grid(row=1, column=1)
+		self.serial_canvas.grid(row=1, column=1, sticky='W', padx=5, pady=5)
 
 		# OBS port number
 
-		label = tk.Label(self.master, text="OBS port number")
-		label.grid(row=2, column=0)
+		obs_frame = tk.LabelFrame(master_frame, text='OBS')
+		obs_frame.grid(row=1, column=0)
+		obs_frame.columnconfigure(0, minsize=COL0)
+		obs_frame.columnconfigure(1, minsize=COL1)
+
+		label = tk.Label(obs_frame, text="OBS port number")
+		label.grid(row=0, column=0, sticky='E', padx=5, pady=5)
 
 		self.obs_port_text = tk.StringVar()
 		self.obs_port_text.set(self.interface.obs.port)
@@ -78,13 +100,13 @@ class App():
 
 		self.obs_port_text.trace_add("write", set_port)
 
-		obs_port_entry = tk.Entry(self.master, textvariable=self.obs_port_text)
-		obs_port_entry.grid(row=2, column=1)
+		obs_port_entry = tk.Entry(obs_frame, textvariable=self.obs_port_text)
+		obs_port_entry.grid(row=0, column=1, sticky='W', padx=5, pady=5)
 
 		# OBS password
 
-		label = tk.Label(self.master, text="OBS password")
-		label.grid(row=3, column=0)
+		label = tk.Label(obs_frame, text="OBS password")
+		label.grid(row=1, column=0, sticky='E', padx=5, pady=5)
 
 		self.obs_password_text = tk.StringVar()
 		self.obs_password_text.set(self.interface.obs.password)
@@ -101,21 +123,24 @@ class App():
 
 		self.obs_password_text.trace_add("write", set_password)
 
-		obs_password_entry = tk.Entry(self.master, textvariable=self.obs_password_text)
-		obs_password_entry.grid(row=3, column=1)
+		obs_password_entry = tk.Entry(obs_frame, textvariable=self.obs_password_text)
+		obs_password_entry.grid(row=1, column=1, sticky='W', padx=5, pady=5)
 
 		# Serial ports
 
-		label = tk.Label(self.master, text='Select port')
-		label.grid(row=4, column=0)
+		serial_frame = tk.LabelFrame(master_frame, text='Device')
+		serial_frame.grid(row=2, column=0)
+		serial_frame.columnconfigure(0, minsize=COL0)
+		serial_frame.columnconfigure(1, minsize=COL1)
 
-		empty_msg = 'Select port'
+		label = tk.Label(serial_frame, text='Select port')
+		label.grid(row=0, column=0, sticky='E', padx=5, pady=5)
 
 		self.serial_port_text = tk.StringVar(self.master)
-		self.serial_port_text.set(self.interface.serial_port or empty_msg)
+		self.serial_port_text.set(self.interface.serial_port or EMPTY_PORT_MSG)
 
 		def on_serial_connect():
-			self.serial_port_text.set(self.interface.serial_port or empty_msg)
+			self.serial_port_text.set(self.interface.serial_port or EMPTY_PORT_MSG)
 			self.serial_canvas.itemconfig(self.serial_light, fill='green')
 
 		def on_serial_disconnect():
@@ -125,31 +150,35 @@ class App():
 		self.interface.disconnect_callback = on_serial_disconnect
 
 		def set_serial_port(*_):
-			if self.serial_port_text.get() != empty_msg:
+			if self.serial_port_text.get() != EMPTY_PORT_MSG:
 				self.interface.serial_port = self.serial_port_text.get()
 
 		self.serial_port_text.trace_add("write", set_serial_port)
 
-		port_names = [p.device for p in self.interface.get_ports()]
-		self.port_list = tk.OptionMenu(self.master, self.serial_port_text, *port_names)
-		self.port_list.config(width=15)
-		self.port_list.grid(row=4, column=1)
+		port_names = [p.device for p in self.interface.get_ports()] or [EMPTY_PORT_MSG]
+		self.port_list = tk.OptionMenu(serial_frame, self.serial_port_text, *port_names)
+		self.port_list.config(width=16)
+		self.port_list.grid(row=0, column=1, sticky='W', padx=5, pady=5)
 
 		def refresh_ports():
-			self.serial_port_text.set(self.interface.serial_port or empty_msg)
+			self.serial_port_text.set(self.interface.serial_port or EMPTY_PORT_MSG)
 			self.port_list['menu'].delete(0, 'end')
-			new_choices = [p.device for p in self.interface.serial_ports]
+			new_choices = [p.device for p in self.interface.serial_ports] or [EMPTY_PORT_MSG]
 			for choice in new_choices:
 				self.port_list['menu'].add_command(label=choice, command=tk._setit(self.serial_port_text, choice))
 
-		button = tk.Button(self.master, command=refresh_ports, text='Refresh')
-		button.grid(row=5, column=1)
+		button = tk.Button(serial_frame, command=refresh_ports, text='Refresh')
+		button.grid(row=1, column=1, sticky='W', padx=5, pady=5)
+
+	# def callback(self):
+	# 	self.interface.poll()
+	# 	self.master.after(POLL_TIME, self.callback)
 
 	def loop(self):
+		# self.master.after(POLL_TIME, self.callback)
 		self.master.mainloop()
 
 if __name__ == '__main__':
-	from dotenv import dotenv_values
 	import sys
-	env = dotenv_values()
-	App().loop()
+	verbose = 'v' in ''.join(sys.argv)
+	App(verbose=verbose).loop()
