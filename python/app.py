@@ -53,7 +53,7 @@ class App():
 
 		d = 20
 		self.obs_canvas = tk.Canvas(light_frame, width=d, height=d)
-		self.obs_light = self.obs_canvas.create_oval(5, 5, d, d, fill='red', outline='')
+		self.obs_light = self.obs_canvas.create_oval(5, 5, d, d, fill=('green' if self.interface.obs.connected else 'red'), outline='')
 		self.obs_canvas.grid(row=0, column=1, sticky='W', padx=5, pady=5)
 
 		def on_obs_connect():
@@ -69,7 +69,7 @@ class App():
 		label.grid(row=1, column=0, sticky='E', padx=5, pady=5)
 
 		self.serial_canvas = tk.Canvas(light_frame, width=d, height=d)
-		self.serial_light = self.serial_canvas.create_oval(5, 5, d, d, fill='red', outline='')
+		self.serial_light = self.serial_canvas.create_oval(5, 5, d, d, fill=('green' if self.interface.connected else 'red'), outline='')
 		self.serial_canvas.grid(row=1, column=1, sticky='W', padx=5, pady=5)
 
 		# OBS port number
