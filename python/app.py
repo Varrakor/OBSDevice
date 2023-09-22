@@ -1,31 +1,35 @@
 import tkinter as tk
 import device
-import pathlib
+import os
 import json
 import obs
 import threading
 
-path = pathlib.Path(__file__).parent
-file = path / 'data.json'
+# persistent settings storage
+file = os.path.expanduser('~/.obs_device_data.json')
 
-# POLL_TIME = 500 # ms
-EMPTY_PORT_MSG = 'No port detected'
-
+# GUI sizing
 GEOMETRY = '400x300'
 COL0 = 120
 COL1 = 250
+MASTER_PADDING = 10
+
+# serial port options menu default
+EMPTY_PORT_MSG = 'No port detected'
 
 class App():
 	def __init__(self, verbose=False):
 		
 		try:
+			# get previous settings
 			with open(file, 'r') as f:
 				data = json.load(f)
 
 		except:
+			# make new settings file
 			with open(file, 'w') as f:
 				data = {'obs_port': obs.DEFAULT_PORT, 'obs_password': ''}
-				json.dump(data)
+				json.dump(data, f)
 
 		self.interface = device.DeviceInterface(
 			obs_port=data['obs_port'],
@@ -33,13 +37,14 @@ class App():
 			verbose=verbose
 		)
 
+		# loop device interface in new thread
 		threading.Thread(daemon=True, target=self.interface.loop).start()
 
 		self.master = tk.Tk()
 		self.master.geometry(GEOMETRY)
 
 		master_frame = tk.Frame(self.master)
-		master_frame.grid(row=0, column=0, padx=10, pady=10)
+		master_frame.grid(row=0, column=0, padx=MASTER_PADDING, pady=MASTER_PADDING)
 
 		# Connect lights
 
