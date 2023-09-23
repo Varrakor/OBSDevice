@@ -42,6 +42,7 @@ class App():
 
 		self.master = tk.Tk()
 		self.master.geometry(GEOMETRY)
+		self.master.title('OBSDevice')
 
 		master_frame = tk.Frame(self.master)
 		master_frame.grid(row=0, column=0, padx=MASTER_PADDING, pady=MASTER_PADDING)
