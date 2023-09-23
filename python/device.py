@@ -69,6 +69,7 @@ class DeviceInterface():
       if self.verbose: print(e)
 
       self.serial = None
+      self.serial_port = None
       self.connected = False
       self.disconnect_callback()
 
@@ -104,7 +105,6 @@ class DeviceInterface():
     try:
       if self.serial.in_waiting > 0:
         key = int.from_bytes(self.serial.read(), 'big')
-        print(key)
         
         if key >= 0 and key <= 7: self.obs.set_scene(key)
 

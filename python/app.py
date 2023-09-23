@@ -175,15 +175,7 @@ class App():
 		button = tk.Button(serial_frame, command=refresh_ports, text='Refresh')
 		button.grid(row=1, column=1, sticky='W', padx=5, pady=5)
 
-	# def callback(self):
-	# 	self.interface.poll()
-	# 	self.master.after(POLL_TIME, self.callback)
-
 	def loop(self):
-		# self.master.after(POLL_TIME, self.callback)
 		self.master.mainloop()
 
-if __name__ == '__main__':
-	import sys
-	verbose = 'v' in ''.join(sys.argv)
-	App(verbose=verbose).loop()
+App().loop()

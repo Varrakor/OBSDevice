@@ -97,8 +97,6 @@ class OBS():
     while True:
       try:
         self.request.get_version()
-        # scenes = self.request.get_scene_list().scenes
-        # self.scenes = sorted(scenes, key=lambda s: s['scene_index'])
       except Exception as e:
         if self.verbose: print(e)
         self.connect()
@@ -281,17 +279,3 @@ class OBS():
     try: self.event.callback.register(on_input_mute_state_changed)
     except: pass
 
-# --------------------------------------------------
-
-if __name__ == '__main__':
-  from dotenv import dotenv_values
-
-  env = dotenv_values()
-
-  obs = OBS(env['OBS_PASSWORD'], verbose=True)
-  obs.register_on_scene_change(lambda scene_index: print(f'Changed to {scene_index}'))
-
-  while True:
-    time.sleep(1)
-    # obs.get_scenes()
-    # print(obs.scene_index)
