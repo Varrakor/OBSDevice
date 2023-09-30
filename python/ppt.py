@@ -3,17 +3,35 @@ Interface with Microsoft PowerPoint via Applescript for Mac and COM32 for Window
 '''
 
 import subprocess
-import pathlib
 import platform
 
 os = platform.system()
 
 # Mac
+
 PREVIOUS = 126 # key code
 NEXT = 125
-SCRIPT = pathlib.Path(__file__).parent / '../script/change_slide.applescript'
+
+# Currently does not handle minimised or closed windows
+# PowerPoint will activate, unactivating the current app, but nothing else will happen
+
+SCRIPT = lambda key : f'''
+property app_name : "Microsoft PowerPoint"
+
+on run argv
+
+if application app_name is running
+  tell application app_name
+    activate
+    tell application "System Events" to key code {key}
+  end tell
+end if
+
+end run
+'''
 
 # Windows
+
 if os == 'Windows':
   import win32com.client as win32
   
@@ -27,7 +45,7 @@ def next_slide():
 
 def change_slide_apple(key):
   if key in [PREVIOUS, NEXT]:
-    subprocess.run(f'osascript {SCRIPT} {key}', shell=True)
+    subprocess.run(['osascript', '-e', SCRIPT(key)])
 
 def change_slide_windows(key):
   app = win32.Dispatch('PowerPoint.Application')
@@ -57,4 +75,4 @@ if __name__ == '__main__':
   while True:
     key = input().strip()
     if key in 'aw': previous_slide()
-    else: next_slide(NEXT)
+    else: next_slide()

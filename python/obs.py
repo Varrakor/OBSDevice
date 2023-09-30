@@ -9,7 +9,6 @@ If disconnected from OBS, all methods do nothing while connection is reestablish
 import obsws_python
 import threading
 import time
-import numpy as np
 
 DEFAULT_PORT = 4455
 
@@ -25,9 +24,18 @@ class OBS():
     self.verbose = verbose
 
     # Create list of values to increment volume slider
-    self.lvls = np.logspace(0, 2, 20)
-    self.lvls = [-lvl for lvl in self.lvls]
-    self.lvls = np.insert(self.lvls, 0, 0)
+    # self.lvls = np.logspace(0, 2, 20)
+    # self.lvls = [-lvl for lvl in self.lvls]
+    # self.lvls = np.insert(self.lvls, 0, 0)
+    # print(self.lvls)
+
+    # hardcode instead to avoid importing numpy
+    self.lvls = [
+      0, -1, -1.27427499, -1.62377674, -2.06913808, -2.6366509, -3.35981829,
+      -4.2813324, -5.45559478, -6.95192796, -8.8586679, -11.28837892,
+      -14.38449888, -18.32980711, -23.35721469, -29.76351442, -37.92690191,
+      -48.32930239, -61.58482111, -78.47599704, -100
+    ]
     
     # websocket objects
     self.request = None
@@ -278,4 +286,3 @@ class OBS():
 
     try: self.event.callback.register(on_input_mute_state_changed)
     except: pass
-

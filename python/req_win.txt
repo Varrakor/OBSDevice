@@ -5,3 +5,4 @@ obsws-python==1.4.2
 py2app==0.28.6
 pyserial==3.5
 websocket-client==1.6.3
+pywin32==306

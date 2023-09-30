@@ -6,7 +6,7 @@ import obs
 import threading
 
 # persistent settings storage
-file = os.path.expanduser('~/.obs_device_data.json')
+file = os.path.expanduser('~/.OBSDevice.json')
 
 # GUI sizing
 GEOMETRY = '400x300'
