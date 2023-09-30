@@ -7,9 +7,9 @@ Usage:
 
 from setuptools import setup
 
-APP = ['../python/app.py']
+APP = ['app.py']
 DATA_FILES = []
-OPTIONS = {}
+OPTIONS = {'includes': ['obsws_python', 'serial']}
 
 setup(
 	name='OBSDevice',
