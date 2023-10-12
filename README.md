@@ -2,19 +2,64 @@
 
 ## OBS Scene Switcher
 
-To initialise PlatformIO, ensure PlatformIO Core is installed and run
+To install the OBSDevice MacOS application:
 
-```console
-pio project init --board nanoatmega328
-```
+- Open Terminal and navigate to your home directory:
 
-The python scripts require a .env file located in the same directory.
+  ```console
+  > cd ~
+  ```
 
-Example .env contents:
+- Clone the repository
 
-```console
-HOST=localhost
-PORT=4455
-OBS_PASSWORD=password                   # set in OBS app
-SERIAL_PORT=/dev/cu.usbserial-1430  # can be found on Mac with command: ls /dev/cu*
-```
+  ```console
+  > git clone https://github.com/Varrakor/SoftwareDesignProject.git
+  ```
+
+- Run the install script
+  ```console
+  > source SoftwareDesignProject/install.sh
+  ```
+
+To run the application as a Python script:
+
+- Open Terminal and navigate to your home directory:
+
+  ```console
+  > cd ~
+  ```
+
+- Clone the repository
+
+  ```console
+  > git clone https://github.com/Varrakor/SoftwareDesignProject.git
+  ```
+
+- Navigate to the python directory
+
+  ```console
+  > cd SoftwareDesignProject/python
+  ```
+
+- Create a Python virtual environment
+
+  ```console
+  > python3 -m venv venv
+  ```
+
+- Activate the virtual environment
+
+  ```console
+  > source venv/bin/activate
+  ```
+
+- Download the required packages
+
+  ```console
+  > pip3 install -r req_mac.txt
+  ```
+
+- Run the script
+  ```console
+  > python3 app.py
+  ```
