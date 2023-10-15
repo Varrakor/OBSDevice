@@ -13,12 +13,12 @@ To install the OBSDevice MacOS application:
 - Clone the repository
 
   ```console
-  > git clone https://github.com/Varrakor/SoftwareDesignProject.git
+  > git clone https://github.com/Varrakor/OBSDevice.git
   ```
 
 - Run the install script
   ```console
-  > source SoftwareDesignProject/install.sh
+  > source OBSDevice/install.sh
   ```
 
 To run the application as a Python script:
@@ -32,13 +32,13 @@ To run the application as a Python script:
 - Clone the repository
 
   ```console
-  > git clone https://github.com/Varrakor/SoftwareDesignProject.git
+  > git clone https://github.com/Varrakor/OBSDevice.git
   ```
 
 - Navigate to the python directory
 
   ```console
-  > cd SoftwareDesignProject/python
+  > cd OBSDevice/python
   ```
 
 - Create a Python virtual environment
