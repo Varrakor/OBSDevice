@@ -4,5 +4,4 @@ modulegraph==0.19.6
 obsws-python==1.4.2
 py2app==0.28.6
 pyserial==3.5
-tk==0.1.0
 websocket-client==1.6.3
