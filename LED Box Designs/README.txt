@@ -1,0 +1,1 @@
+This folder contains .stl files for reprinting the design, as well as the Fusion360 file to make any alterations to the design.
