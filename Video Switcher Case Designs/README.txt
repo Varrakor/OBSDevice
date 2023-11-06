@@ -1,0 +1,1 @@
+This folder contains only the .stl files for reprinting the design of the video switcher case.
